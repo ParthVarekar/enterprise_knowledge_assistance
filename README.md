@@ -9,12 +9,12 @@
 [![Vitest](https://img.shields.io/badge/Vitest-1.6.0-646CFF?style=for-the-badge&logo=vitest&logoColor=white)](https://vitest.dev/)
 [![Zero-Trust ACL](https://img.shields.io/badge/Zero--Trust-Enforced-red?style=for-the-badge&logo=shield)](docs/SECURITY.md)
 [![Aegis-QA](https://img.shields.io/badge/Aegis--QA-Active-8A2BE2?style=for-the-badge&logo=shield)](docs/AEGIS_QA.md)
-[![Llama.cpp CUDA](https://img.shields.io/badge/Llama.cpp-CUDA_Accelerated-FF6F00?style=for-the-badge&logo=nvidia&logoColor=white)](https://github.com/ggerganov/llama.cpp)
+[![Llama.cpp CUDA](https://img.shields.io/badge/Llama.cpp-Gemma--4--E4B--CUDA-FF6F00?style=for-the-badge&logo=nvidia&logoColor=white)](https://github.com/ggerganov/llama.cpp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 <br/>
 
-*An enterprise-grade knowledge retrieval and intelligence engine connecting multi-tenant enterprise data sources (Confluence, Google Drive, Zendesk, Markdown), enforcing defense-in-depth Zero-Trust access controls, performing mathematical hybrid RAG retrieval, leveraging local CUDA-accelerated Llama.cpp inference, and guaranteeing claim-level NLI grounding directly inside Slack.*
+*An enterprise-grade knowledge retrieval and intelligence engine connecting multi-tenant enterprise data sources (Confluence, Google Drive, Zendesk, Markdown), enforcing defense-in-depth Zero-Trust access controls, performing mathematical hybrid RAG retrieval, leveraging local CUDA-accelerated Llama.cpp inference hosting Gemma 4 E4B IT (`gemma-4-E4B-it.gguf`), and guaranteeing claim-level NLI grounding directly inside Slack.*
 
 </div>
 
@@ -25,7 +25,8 @@
 - [Executive Summary & Core Value Proposition](#-executive-summary--core-value-proposition)
 - [System Architecture](#-system-architecture)
 - [Local LLM Engine: Llama.cpp & CUDA Setup](#-local-llm-engine-llamacpp--cuda-setup)
-- [Quick Start Guide](#-quick-start-guide)
+- [Model Management & Automated Setup](#-model-management--automated-setup)
+- [Quick Start Guide & System Launcher](#-quick-start-guide--system-launcher)
 - [Interactive Web App Overview](#-interactive-web-app-overview)
 - [Security Model & Zero-Trust ACL](#-security-model--zero-trust-acl)
 - [Hybrid Retrieval Mathematics](#-hybrid-retrieval-mathematics)
@@ -54,7 +55,7 @@ The **Enterprise Knowledge Assistant** solves these critical challenges with a p
 - 🛡 **Zero-Trust Security Framework**: Dual-layer authorization comprising pre-retrieval static ACL evaluation (`ACLEvaluator`) and post-retrieval real-time source API verification (`LivePermissionGate`), with explicit deny precedence.
 - 🧮 **Mathematical Hybrid Retrieval**: Merges Sparse BM25 keyword matching with Dense Vector Cosine Similarity using Reciprocal Rank Fusion (RRF), weighted by document authority and exponential temporal recency decay ($e^{-\lambda t}$).
 - 🔬 **NLI Grounding & Intelligent Abstention**: Performs sentence-level Natural Language Inference (NLI) claim extraction and entailment verification. Refuses to answer ("abstains") if evidence is insufficient or permissions fail.
-- ⚡ **Local CUDA LLM Inference**: Direct integration with `llama.cpp` hosting `qwen2.5-coder-7b.gguf` with hardware GPU acceleration, ensuring 100% data privacy and zero cloud LLM latency/costs.
+- ⚡ **Local CUDA LLM Inference**: Direct integration with `llama.cpp` hosting `gemma-4-E4B-it.gguf` (4.77 GB) on NVIDIA GeForce RTX 5050 Laptop GPU with 100% CUDA offload (`-ngl 99`) on port 8085, ensuring 100% data privacy and zero cloud LLM latency/costs.
 - 📊 **Aegis-QA Quality Platform**: Continuous autonomous quality testing featuring randomized Property Invariants, AST Mutation Testing (gate inversions), Payload Fuzzing, and automated Benchmark Scenarios.
 
 ---
@@ -99,7 +100,7 @@ The end-to-end data flow operates through an audited, multi-stage pipeline:
 │                                                ▼                                                 │
 │   ┌──────────────────────────────────────────────────────────────────────────────────────────┐   │
 │   │                               LOCAL LLM INFERENCE (LLAMA.CPP)                            │   │
-│   │  - Model: qwen2.5-coder-7b.gguf via CUDA acceleration                                    │   │
+│   │  - Model: gemma-4-E4B-it.gguf (Port 8085) via CUDA GPU Offload (-ngl 99)                 │   │
 │   │  - Synthesis of Grounded Context Chunks -> Candidate Answer                              │   │
 │   └────────────────────────────────────────────┬─────────────────────────────────────────────┘   │
 │                                                │ Synthesized Text & Claims                       │
@@ -132,16 +133,18 @@ The end-to-end data flow operates through an audited, multi-stage pipeline:
 
 The engine integrates directly with `llama.cpp` for ultra-low latency, zero-cloud dependency, local hardware-accelerated LLM generation.
 
-### Local Server Configuration
-- **Binary Path**: `D:\llama4\llama-server.exe`
-- **GGUF Quantized Model**: `D:\llama4\qwen2.5-coder-7b.gguf`
-- **Context Length**: `4096` tokens
-- **Port**: `8080` (`http://127.0.0.1:8080`)
-- **Acceleration**: NVIDIA CUDA GPU offloading enabled
+### Local Hardware & Server Configuration
+- **Hardware Acceleration**: NVIDIA GeForce RTX 5050 Laptop GPU (8.0 GB VRAM)
+- **Binary Executable**: `llama-server.exe`
+- **GGUF LLM Model**: Gemma 4 E4B IT (`gemma-4-E4B-it.gguf` -- 4.77 GB)
+- **VRAM Offloading**: 100% CUDA GPU offload (`-ngl 99`)
+- **Context Window**: `4096` tokens
+- **Local Server Port**: `8085` (`http://127.0.0.1:8085`)
+- **Model Manager**: `scripts/ensure_model.py` (handles automatic one-time download & verification)
 
-### Starting the Server
+### Starting the Llama Server
 
-The system includes a dedicated NPM script to spin up the local server:
+The system provides an NPM script to launch the local CUDA-accelerated Llama server on port 8085:
 
 ```bash
 npm run llama:server
@@ -149,25 +152,25 @@ npm run llama:server
 
 *Executed command:*
 ```powershell
-D:\llama4\llama-server.exe -m D:\llama4\qwen2.5-coder-7b.gguf -c 4096 --port 8080
+llama-server.exe -m models\gemma-4-E4B-it.gguf -c 4096 --port 8085 -ngl 99
 ```
 
 ### TypeScript HTTP Client Integration (`LlamaCppClient`)
 
-The application consumes the OpenAI-compatible `/v1/chat/completions` REST endpoint exposed by `llama-server.exe`. If the server is offline or unreachable, `LlamaCppClient` automatically falls back to deterministic context synthesis, ensuring zero system downtime during local development or maintenance.
+The backend engine communicates with the OpenAI-compatible `/v1/chat/completions` REST endpoint exposed by `llama-server.exe` on port 8085. If the server is offline or unreachable, `LlamaCppClient` automatically falls back to deterministic context synthesis, ensuring zero system downtime.
 
 ```typescript
 import { LlamaCppClient } from './src/llm/llamaClient';
 
 const client = new LlamaCppClient({
-  baseUrl: 'http://127.0.0.1:8080',
+  baseUrl: 'http://127.0.0.1:8085',
   timeoutMs: 15000,
 });
 
 // Health check endpoint verification
 const isHealthy = await client.isServerAlive();
 
-// High-speed CUDA inference request
+// High-speed CUDA inference request (Gemma 4 E4B IT)
 const response = await client.generateChatCompletion([
   { role: 'system', content: 'You are an enterprise knowledge assistant.' },
   { role: 'user', content: 'What is the production deployment procedure?' }
@@ -176,79 +179,126 @@ const response = await client.generateChatCompletion([
 
 ---
 
-## 🚀 Quick Start Guide
+## 📦 Model Management & Automated Setup
+
+To ensure seamless installation and execution without requiring manual model downloads, the repository includes an automated Python model manager (`scripts/ensure_model.py`).
+
+### Automatic Model Verification (`scripts/ensure_model.py`)
+Before starting the servers, `scripts/ensure_model.py` automatically checks for the presence and integrity of `models/gemma-4-E4B-it.gguf` (4.77 GB):
+1. **Local Model Verification**: Checks if `models/gemma-4-E4B-it.gguf` exists and validates its size.
+2. **Local HF Cache Check**: Automatically inspects local HuggingFace cache directories to copy pre-downloaded weights if present.
+3. **Automated HuggingFace Download**: If missing, streams the official `gemma-4-E4B-it.gguf` binary directly from HuggingFace with progress reporting.
+
+Run model manager manually:
+```bash
+python scripts/ensure_model.py
+```
+
+---
+
+## 🚀 Quick Start Guide & System Launcher
 
 ### Prerequisites
 
-- **Node.js**: `v20.0.0` or higher
-- **npm**: `v9.0.0` or higher
+- **Node.js**: `v18.0.0` or higher (Recommended `v20+`)
+- **Python**: `v3.8+` (for `scripts/ensure_model.py`)
 - **TypeScript**: `v5.5`
-- **(Optional) Local Hardware**: NVIDIA GPU with CUDA drivers installed for `llama.cpp` server execution.
+- **Local Hardware**: NVIDIA GeForce RTX 5050 Laptop GPU (8.0 GB VRAM) with CUDA drivers installed for 100% GPU offloaded `llama.cpp` execution (`-ngl 99`).
 
-### Step 1: Installation
+---
 
-Clone the repository and install all dependencies:
+### Option A: One-Click Full Platform Launcher (`start.bat`) [Recommended]
+
+Run the automated one-click launcher script in root directory:
+
+```cmd
+start.bat
+```
+
+`start.bat` automatically orchestrates the entire stack:
+1. **Verifies Environment & Model**: Executes `python scripts/ensure_model.py` to ensure `gemma-4-E4B-it.gguf` (4.77 GB) is ready.
+2. **Builds Backend**: Compiles TypeScript files into `dist/`.
+3. **Launches Service 1**: Spins up `llama-server.exe` hosting **Gemma 4 E4B IT** on **Port 8085** with 100% CUDA GPU offload (`-ngl 99`).
+4. **Launches Service 2**: Starts the EKRS Node.js Backend API server on **Port 8080**.
+5. **Launches Service 3**: Starts the Vite React UI on **Port 3000** and opens `http://localhost:3000` in your web browser.
+
+---
+
+### Option B: Manual Step-by-Step Setup
+
+#### Step 1: Clone Repository & Install Dependencies
 
 ```bash
 git clone https://github.com/ParthVarekar/enterprise_knowledge_assistance.git
 cd enterprise_knowledge_assistance
 npm install
+npm --prefix frontend install
 ```
 
-### Step 2: Build the TypeScript Core Engine
+#### Step 2: Model Management & Build
 
-Compile the TypeScript source code into `dist/`:
+Ensure model file presence and compile TypeScript backend:
 
 ```bash
+python scripts/ensure_model.py
 npm run build
 ```
 
-### Step 3: Launch Local Llama.cpp LLM Server (Optional / Recommended)
+#### Step 3: Start Llama.cpp CUDA Server (Port 8085)
 
-In a separate terminal window, launch the CUDA-accelerated Llama server:
+In Terminal 1, launch the Llama server hosting Gemma 4 E4B IT:
 
 ```bash
 npm run llama:server
 ```
 
-### Step 4: Run the Interactive Terminal Demo
+#### Step 4: Start Node.js Backend API Server (Port 8080)
 
-Execute the interactive end-to-end engine demo script:
+In Terminal 2, launch the backend API:
 
 ```bash
-npm run demo
+npm run server:backend
 ```
 
-*What the demo does:*
-1. Registers multi-source connectors (Confluence, Google Drive, Zendesk, Markdown).
-2. Indexes documents across BM25 sparse index and vector store.
-3. Simulates queries under different user personas (e.g., Executive vs. Engineering vs. Support).
-4. Evaluates Static ACL & Live Permission Gates.
-5. Performs Hybrid RRF Retrieval and Recency Decay scoring.
-6. Invokes local Llama.cpp model for grounded synthesis.
-7. Displays claim verification status, citations, confidence scores, and audit trace.
+#### Step 5: Start Vite React Frontend UI (Port 3000)
 
-### Step 5: Launch the Interactive React Web App UI
-
-Run the Vite frontend development server:
+In Terminal 3, launch the web dashboard:
 
 ```bash
 npm run frontend:dev
 ```
 
-Open `http://localhost:5173` in your browser to interact with the full web dashboard.
+Open `http://localhost:3000` in your web browser.
+
+#### Step 6: (Optional) Interactive Terminal Demo
+
+To test retrieval, Zero-Trust ACL filtering, and LLM synthesis in CLI mode:
+
+```bash
+npm run demo
+```
+
+---
+
+### Platform Ports Summary
+
+| Service | Port | Description |
+| :--- | :--- | :--- |
+| **Llama.cpp CUDA Server** | `8085` | Gemma 4 E4B IT (`gemma-4-E4B-it.gguf` -- 4.77 GB) with 100% CUDA GPU offload (`-ngl 99`) |
+| **Node.js Backend API** | `8080` | Zero-Trust ACL Engine, Hybrid RAG Retriever, Audit Ledger & Grounding Verifier |
+| **Vite React UI** | `3000` | User Workspace UI, Persona Switcher, RAG Inspector, Aegis-QA Dashboard |
 
 ---
 
 ## 💻 Interactive Web App Overview
 
-The project features a sleek, full-featured React + Vite + Tailwind CSS web dashboard (`frontend/`) designed for inspecting, debugging, and testing every component of the system:
+The project features a sleek, full-featured React + Vite + Tailwind CSS web dashboard (`frontend/`) running on **Port 3000** that connects to the backend on **Port 8080** and Llama.cpp CUDA engine on **Port 8085**:
 
 ```
 frontend/
 ├── src/
 │   ├── components/
-│   │   ├── Header.tsx              # Navigation & System Status Indicators
+│   │   ├── Header.tsx              # Navigation & System Status Indicators (Port 8085 / 8080)
 │   │   ├── Sidebar.tsx             # Module Navigation Sidebar
 │   │   ├── GroundingBadge.tsx      # Claim Verification Status Badge
 │   │   └── CitationModal.tsx       # Document Source Inspector Modal
@@ -266,7 +316,7 @@ frontend/
 1. 👤 **Persona Switcher**: Seamlessly switch between active user profiles (e.g., `Executive Alice`, `Engineer Bob`, `Support Charlie`, `Restricted User Dave`) to witness real-time permission filtering in chat responses.
 2. 🔍 **RAG Inspector**: Visual breakdown showing exact Sparse BM25 scores, Vector Cosine similarities, RRF fusion ranks, temporal recency decay penalties, and final calculated document weights.
 3. 🛡 **Security Lab**: Test arbitrary user entitlements against document ACL schemas. Simulate group inheritance, explicit user allows/denies, and visibility modes (`public`, `tenant_internal`, `restricted_groups`, `explicit_users`).
-4. ⚡ **Aegis-QA Dashboard**: Real-time monitor executing property invariant checks, trigger AST mutation testing to verify logical gate strength, and run payload fuzzer scenarios.
+4. ⚡ **Aegis-QA Dashboard**: Real-time monitor executing property invariant checks, triggering AST mutation testing to verify logical gate strength, and running payload fuzzer scenarios.
 
 ---
 
@@ -384,20 +434,20 @@ To guarantee that the assistant never produces ungrounded hallucinations, every 
 
 ```
                     Synthesized Text Response
-                               │
-                               ▼
+                                │
+                                ▼
                    Claim Extraction Engine
                 Sentence-Level Segmentation
-                               │
+                                │
                Claims: [ c1, c2, ..., cn ]
-                               │
-                               ▼
+                                │
+                                ▼
                Entailment Verification (NLI)
              Compare Claim against Context Chunks
-                               │
-                               ▼
+                                │
+                                ▼
              Compute Overall Grounding Score (C)
-                               │
+                                │
             ┌──────────────────┴──────────────────┐
             │                                     │
       C >= 0.40                             C < 0.40
@@ -460,10 +510,10 @@ Enterprise Knowledge Assistant / Aegis-QA Framework
 
 ```
 enterprise-knowledge-assistant/
-├── frontend/                        # Interactive React + Vite + Tailwind Web Application
+├── frontend/                        # Interactive React + Vite + Tailwind Web Application (Port 3000)
 │   ├── src/
 │   │   ├── components/              # UI Components (GroundingBadge, CitationModal, etc.)
-│   │   ├── mockEngine/              # Adapter layer bridging React UI with Core Engine
+│   │   ├── mockEngine/              # Adapter layer bridging React UI with Core Engine & Port 8085
 │   │   ├── views/                   # Application Views (Chat, RAG, Security Lab, Aegis-QA)
 │   │   ├── App.tsx                  # Main React Layout
 │   │   └── main.tsx                 # Frontend Entrypoint
@@ -471,6 +521,10 @@ enterprise-knowledge-assistant/
 │   ├── package.json
 │   ├── tailwind.config.js
 │   └── vite.config.ts
+├── models/                          # Local GGUF LLM Model Storage
+│   └── gemma-4-E4B-it.gguf          # Gemma 4 E4B IT Model Binary (4.77 GB)
+├── scripts/                         # Operational & Maintenance Scripts
+│   └── ensure_model.py              # Automatic Model Download & Verification Manager
 ├── src/                             # Core TypeScript Engine Source Code
 │   ├── index.ts                     # Engine Orchestrator & Main Export Entrypoint
 │   ├── demo.ts                      # CLI Interactive Demo Script
@@ -483,7 +537,7 @@ enterprise-knowledge-assistant/
 │   ├── grounding/
 │   │   └── verifier.ts              # NLI Grounding & Claim Entailment Verifier
 │   ├── llm/
-│   │   └── llamaClient.ts           # Local Llama.cpp CUDA REST HTTP Client
+│   │   └── llamaClient.ts           # Local Llama.cpp CUDA REST HTTP Client (Port 8085)
 │   ├── observability/
 │   │   └── auditLedger.ts           # Audit Trail Logger & Compliance Ledger
 │   ├── qa/                          # Aegis-QA Autonomous Quality Framework
@@ -498,6 +552,8 @@ enterprise-knowledge-assistant/
 │   ├── security/                    # Zero-Trust Security Framework
 │   │   ├── acl.ts                   # Static Unified ACL Evaluator
 │   │   └── livePermissionGate.ts    # Real-Time Source API Authorization Gate
+│   ├── server/                      # Standalone Backend API Server (Port 8080)
+│   │   └── standalone.ts            # REST API Server Entrypoint
 │   ├── slack/
 │   │   └── server.ts                # Bolt for Slack Application Entrypoint
 │   ├── synthesis/
@@ -515,6 +571,7 @@ enterprise-knowledge-assistant/
 │   ├── DEPLOYMENT.md                # Operations & Production Deployment Guide
 │   └── SECURITY.md                  # Security Model & Threat Specification
 ├── package.json                     # NPM Dependencies & Build Scripts
+├── start.bat                        # One-Click Full Platform Launcher (Ports 8085, 8080, 3000)
 ├── tsconfig.json                    # TypeScript 5.5 Compiler Configuration
 ├── vitest.config.ts                 # Vitest Framework Configuration
 ├── .gitignore

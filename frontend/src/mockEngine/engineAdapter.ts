@@ -99,6 +99,19 @@ export interface QueryResult {
   timestamp: string;
 }
 
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'but', 'if', 'because', 'as', 'what', 'which', 'who', 'whom',
+  'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+  'have', 'has', 'had', 'having', 'do', 'does', 'did', 'doing', 'until', 'while', 'of', 'at',
+  'by', 'for', 'with', 'about', 'against', 'between', 'into', 'through', 'during', 'before',
+  'after', 'above', 'below', 'to', 'from', 'up', 'down', 'in', 'out', 'on', 'off', 'over',
+  'under', 'again', 'further', 'then', 'once', 'here', 'there', 'when', 'where', 'why', 'how',
+  'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
+  'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just',
+  'don', 'should', 'now', 'tell', 'me', 'bit', 'your', 'you', 'my', 'i', 'we', 'our', 'us',
+  'please', 'could', 'would'
+]);
+
 export class EngineAdapter {
   private static docs = [
     {
@@ -181,17 +194,17 @@ export class EngineAdapter {
     const queryLower = queryTrimmed.toLowerCase();
     const level = persona.clearanceLevel || 2;
 
-    // Check for conversational greetings
-    const greetings = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'what can you do', 'help', 'good morning', 'good afternoon', 'good evening'];
-    const isGreeting = greetings.includes(queryLower) || queryLower.startsWith('hi ') || queryLower.startsWith('hello ');
+    // Check for conversational greetings & system capability questions
+    const isGreeting = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'good morning', 'good afternoon'].some(g => queryLower === g || queryLower.startsWith(g + ' '));
+    const isCapabilityQuery = queryLower.includes('capabilities') || queryLower.includes('what can you do') || queryLower.includes('what do you do') || queryLower.includes('help me') || queryLower.includes('how to use');
 
-    if (isGreeting) {
+    if (isGreeting || isCapabilityQuery) {
       const latencyMs = Number((performance.now() - start + 15).toFixed(1));
       return {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `Hello ${persona.name}! I am your Susurrus Enterprise Knowledge Assistant. I am operating under your currently assumed fluid clearance Level ${level} (${persona.role}). Access controls and corporate level usage restrictions are dynamically enforced.\n\nTry asking me about:\n• API gateway architecture and rate limiting\n• Production deployment & blue-green runbooks\n• Password reset & MFA setup instructions\n• Customer Data Processing Agreement (DPA)\n• Subscription plans and billing details`,
+        answerText: `Hello ${persona.name}! I am your EKRS Zero-Trust Enterprise Knowledge Assistant running with CUDA GPU acceleration (Gemma 4 E4B IT). I operate under your clearance Level ${level} (${persona.role}).\n\nI can help you search and retrieve answers from connected enterprise documentation including:\n• API Gateway Architecture & Token Bucket Rate Limits\n• Blue-Green Production Deployment & Incident Protocols\n• Engineering Onboarding & Tooling Guidelines\n• Customer Data Processing Agreements (DPA - Restricted)\n• Password Reset & MFA Setup Instructions\n• Subscription Plans & Billing FAQ`,
         confidenceScore: 0.95,
         isAbstained: false,
         citations: [],
@@ -209,10 +222,9 @@ export class EngineAdapter {
       };
     }
 
-    // 1. ACL Filter Candidates based on BOTH Group Membership AND Fluid Clearance Level
+    // 1. ACL Filter Candidates based on Group Membership AND Clearance Level
     const eligibleDocs = this.docs.filter(doc => {
       if (level < doc.minClearanceLevel) return false;
-
       if (doc.visibility === 'public') return true;
       if (doc.visibility === 'tenant_internal') {
         return persona.groups.includes('all-employees') || persona.groups.length > 0;
@@ -223,8 +235,8 @@ export class EngineAdapter {
       return false;
     });
 
-    // Check for restricted queries (e.g., DPA, Legal agreements)
-    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing') || queryLower.includes('agreement');
+    // Check for restricted queries (e.g. DPA, Legal agreements)
+    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing');
     const hasLegalAccess = (persona.groups.includes('legal-team') || persona.groups.includes('executives')) && level >= 4;
 
     if (isRestrictedQuery && !hasLegalAccess) {
@@ -233,7 +245,7 @@ export class EngineAdapter {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current fluid clearance is Level ${level}.`,
+        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current clearance is Level ${level}.`,
         confidenceScore: 0.12,
         isAbstained: true,
         abstentionReason: `Zero-Trust Role Restriction: User ${persona.name} (${persona.role}) operates at Level ${level} and lacks required 'legal-team' or 'executives' entitlement.`,
@@ -243,11 +255,11 @@ export class EngineAdapter {
           chunkId: doc.id,
           documentTitle: doc.title,
           sourceSystem: doc.source,
-          sparseScore: doc.id === 'GDRIVE-002' ? 0.85 : 0.05,
-          denseScore: doc.id === 'GDRIVE-002' ? 0.92 : 0.12,
-          rrfScore: doc.id === 'GDRIVE-002' ? 0.95 : 0.10,
+          sparseScore: doc.id === 'GDRIVE-002' ? 0.85 : 0.0,
+          denseScore: doc.id === 'GDRIVE-002' ? 0.92 : 0.0,
+          rrfScore: doc.id === 'GDRIVE-002' ? 0.95 : 0.0,
           temporalDecay: 0.98,
-          finalScore: doc.id === 'GDRIVE-002' ? 0.89 : 0.08,
+          finalScore: doc.id === 'GDRIVE-002' ? 0.89 : 0.0,
           aclPassed: eligibleDocs.includes(doc),
         })),
         latencyMs,
@@ -255,8 +267,12 @@ export class EngineAdapter {
       };
     }
 
-    // 2. Score Candidates with STRICT NORMALIZATION [0.0, 1.0]
-    const tokens = queryLower.split(/\s+/).filter(t => t.length > 2);
+    // 2. Score Candidates with Stop-Word Filtering & Strict Relevance Thresholding
+    const tokens = queryLower
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(t => t.length > 2 && !STOP_WORDS.has(t));
+
     const candidateScores = this.docs.map(doc => {
       let matches = 0;
       for (const t of tokens) {
@@ -265,21 +281,30 @@ export class EngineAdapter {
         }
       }
 
-      const rawSparse = tokens.length > 0 ? (matches / tokens.length) : 0;
-      const sparseScore = Math.min(1.0, Math.max(0.0, rawSparse));
+      if (matches === 0 || tokens.length === 0) {
+        return {
+          chunkId: doc.id,
+          documentTitle: doc.title,
+          sourceSystem: doc.source,
+          sparseScore: 0,
+          denseScore: 0,
+          rrfScore: 0,
+          temporalDecay: 1.0,
+          finalScore: 0,
+          aclPassed: eligibleDocs.includes(doc),
+          content: doc.content,
+          url: doc.url,
+          updated: doc.updated,
+          classification: doc.classification,
+        };
+      }
 
-      const rawDense = matches > 0 ? 0.70 + Math.min(0.28, matches * 0.07) : 0.30;
-      const denseScore = Math.min(1.0, Math.max(0.0, rawDense));
-
-      const rrfScore = matches > 0 ? 0.85 : 0.20;
-
+      const sparseScore = Math.min(1.0, matches / tokens.length);
+      const denseScore = Math.min(1.0, 0.70 + Math.min(0.28, matches * 0.07));
+      const rrfScore = 0.85;
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
-
-      const unscaledFinal = (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay;
-      const finalScore = Number(Math.min(0.98, Math.max(0.0, unscaledFinal)).toFixed(3));
-
-      const aclPassed = eligibleDocs.includes(doc);
+      const finalScore = Number(Math.min(0.98, (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay).toFixed(3));
 
       return {
         chunkId: doc.id,
@@ -290,7 +315,7 @@ export class EngineAdapter {
         rrfScore: Number(rrfScore.toFixed(3)),
         temporalDecay: Number(temporalDecay.toFixed(3)),
         finalScore,
-        aclPassed,
+        aclPassed: eligibleDocs.includes(doc),
         content: doc.content,
         url: doc.url,
         updated: doc.updated,
@@ -298,20 +323,23 @@ export class EngineAdapter {
       };
     }).sort((a, b) => b.finalScore - a.finalScore);
 
-    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore > 0.30).slice(0, 3);
+    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore > 0.40).slice(0, 3);
 
-    const answerText = bestMatches.length > 0
-      ? `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`
-      : `Here is information relevant to your request:\n\nOur system indexes Confluence, Google Drive, Zendesk, and Slack. Please specify your query regarding rate limiting, deployment runbooks, MFA setup, or subscription plans.`;
+    let answerText = '';
+    let confidenceScore = 0.85;
 
-    const topScore = bestMatches[0]?.finalScore || 0.40;
-    const rawConfidence = 0.72 + (topScore * 0.25);
-    const confidenceScore = Number(Math.min(0.98, Math.max(0.10, rawConfidence)).toFixed(2));
+    if (bestMatches.length > 0) {
+      answerText = `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`;
+      confidenceScore = Number(Math.min(0.98, 0.72 + (bestMatches[0].finalScore * 0.25)).toFixed(2));
+    } else {
+      answerText = `I searched our indexed enterprise knowledge bases (Confluence, Google Drive, Zendesk), but no relevant documentation was found matching "${queryTrimmed}".\n\nTry asking about:\n• API Gateway architecture and rate limits\n• Production blue-green deployment runbook\n• Engineering onboarding guide\n• Password reset & MFA setup\n• Subscription plans and billing details`;
+      confidenceScore = 0.35;
+    }
 
     const claims = bestMatches.map(m => ({
       claimSentence: m.content.substring(0, 110) + '...',
       supportingChunkIds: [m.chunkId],
-      entailmentScore: Number(Math.min(0.98, Math.max(0.70, 0.82 + Math.random() * 0.12)).toFixed(2)),
+      entailmentScore: Number(Math.min(0.98, 0.82 + Math.random() * 0.12).toFixed(2)),
       isVerified: true,
     }));
 
@@ -334,7 +362,7 @@ export class EngineAdapter {
       user: persona,
       answerText,
       confidenceScore,
-      isAbstained: false,
+      isAbstained: bestMatches.length === 0 && !isGreeting && !isCapabilityQuery,
       citations,
       claims,
       candidates: candidateScores,
@@ -345,35 +373,45 @@ export class EngineAdapter {
 
   public static async executeQuery(queryText: string, persona: UserPersona): Promise<QueryResult> {
     const syncResult = this.executeQuerySync(queryText, persona);
-    if (syncResult.isAbstained || syncResult.candidates.length === 0) {
-      return syncResult;
-    }
 
-    // Call local Llama.cpp GPU server on port 8085 if available
+    // Call local Llama.cpp CUDA Server (port 8085) or Backend API (port 8080) for real LLM synthesis
     try {
-      const bestMatches = syncResult.candidates.filter(c => c.aclPassed).slice(0, 3);
-      const topContext = bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n');
+      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore > 0.35).slice(0, 3);
+      const topContext = bestMatches.length > 0
+        ? bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n')
+        : 'No relevant enterprise document context found for this specific query.';
+
       const response = await fetch('http://127.0.0.1:8085/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: `You are Susurrus Enterprise Knowledge Assistant. Answer the user query using the provided context for a user operating at Level ${persona.clearanceLevel || 2} (${persona.role}).` },
-            { role: 'user', content: `Context:\n${topContext || 'No specific document context.'}\n\nQuestion: ${queryText.trim()}` }
+            {
+              role: 'system',
+              content: `You are EKRS Enterprise Knowledge Assistant running under user clearance Level ${persona.clearanceLevel || 2} (${persona.role}). If relevant document context is provided below, answer using it. If no relevant document context exists for the user's question, answer helpful general guidance politely.`
+            },
+            {
+              role: 'user',
+              content: `Context:\n${topContext}\n\nQuestion: ${queryText.trim()}`
+            }
           ],
           max_tokens: 350,
           temperature: 0.3
         }),
         signal: AbortSignal.timeout(6000)
       });
+
       if (response.ok) {
         const json: any = await response.json();
         if (json?.choices?.[0]?.message?.content) {
           syncResult.answerText = json.choices[0].message.content;
+          if (bestMatches.length > 0) {
+            syncResult.isAbstained = false;
+          }
         }
       }
     } catch (e) {
-      // Local llama server offline or timed out, fallback to sync synthesized answer
+      // Local llama-server offline or CORS restricted, keep high-accuracy syncResult
     }
 
     return syncResult;
@@ -494,4 +532,3 @@ export const PRESENTATION_DEMO_RESULTS: QueryResult[] = [
     timestamp: '8:58:00 PM',
   }
 ];
-
