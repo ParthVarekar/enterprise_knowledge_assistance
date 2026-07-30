@@ -1,16 +1,19 @@
 import { ScoredCandidate, GroundedAnswer, ClaimEntailment } from '../types';
 import { GroundingVerifier } from '../grounding/verifier';
+import { LlamaCppClient } from '../llm/llamaClient';
 
 export interface GeneratorConfig {
   confidenceThreshold?: number;
   maxCitations?: number;
   entailmentThreshold?: number;
+  llamaBaseUrl?: string;
 }
 
 export class AnswerGenerator {
   private verifier: GroundingVerifier;
   private confidenceThreshold: number;
   private maxCitations: number;
+  private llamaClient: LlamaCppClient;
 
   constructor(config: GeneratorConfig = {}) {
     this.verifier = new GroundingVerifier({
@@ -18,6 +21,7 @@ export class AnswerGenerator {
     });
     this.confidenceThreshold = config.confidenceThreshold ?? 0.4;
     this.maxCitations = config.maxCitations ?? 5;
+    this.llamaClient = new LlamaCppClient({ baseUrl: config.llamaBaseUrl });
   }
 
   public async generateAnswer(queryId: string, queryText: string, candidates: ScoredCandidate[]): Promise<GroundedAnswer> {
@@ -25,7 +29,10 @@ export class AnswerGenerator {
       return this.createAbstainedAnswer(queryId, 'No relevant documents found for this query after ACL filtering.');
     }
 
-    const answerText = this.synthesize(queryText, candidates);
+    let answerText = await this.synthesizeWithLlama(queryText, candidates);
+    if (!answerText) {
+      answerText = this.synthesizeFallback(queryText, candidates);
+    }
     const groundingResult = this.verifier.verifyClaims(answerText, candidates);
 
     if (groundingResult.overallGroundingScore < this.confidenceThreshold) {
@@ -45,7 +52,28 @@ export class AnswerGenerator {
     };
   }
 
-  private synthesize(queryText: string, candidates: ScoredCandidate[]): string {
+  private async synthesizeWithLlama(queryText: string, candidates: ScoredCandidate[]): Promise<string | null> {
+    const isAlive = await this.llamaClient.isServerAlive();
+    if (!isAlive) return null;
+
+    const topCandidates = candidates.slice(0, 3);
+    const context = topCandidates.map((c, i) => `[Doc ${i + 1} - ${c.chunk.document_title}]: ${c.chunk.content}`).join('\n\n');
+
+    const prompt = [
+      {
+        role: 'system' as const,
+        content: 'You are an Enterprise Knowledge Assistant. Answer the user query strictly using the provided document context. Cite sources using [Doc X]. If context is insufficient, state that clearly.',
+      },
+      {
+        role: 'user' as const,
+        content: `Context:\n${context}\n\nUser Question: ${queryText}`,
+      },
+    ];
+
+    return await this.llamaClient.generateChatCompletion(prompt);
+  }
+
+  private synthesizeFallback(queryText: string, candidates: ScoredCandidate[]): string {
     const topCandidates = candidates.slice(0, 5);
     const context = topCandidates.map(c => c.chunk.content).join('\n\n');
     return `Based on the available documentation:\n\n${context}`;

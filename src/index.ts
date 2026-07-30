@@ -102,4 +102,5 @@ export { GoogleDriveConnector } from './connectors/googleDrive';
 export { ZendeskConnector } from './connectors/zendesk';
 export { MarkdownConnector } from './connectors/markdown';
 export { BaseConnector } from './connectors/base';
+export { LlamaCppClient } from './llm/llamaClient';
 export * from './types';

@@ -1,18 +1,19 @@
-<![CDATA[<div align="center">
+<div align="center">
 
 # 🏢 Enterprise Knowledge Assistant
 
-**Production-Grade Slack-Native RAG Engine with Zero-Trust ACL, Hybrid Retrieval, NLI Grounding & Autonomous QA Platform**
+**Production-Grade Zero-Trust RAG Platform with Hybrid Retrieval, NLI Grounding, Aegis-QA & Local Llama.cpp CUDA Acceleration**
 
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Node.js](https://img.shields.io/badge/Node.js-20+-green?logo=nodedotjs&logoColor=white)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18.3-cyan?logo=react&logoColor=white)](https://react.dev/)
+[![llama.cpp](https://img.shields.io/badge/llama.cpp-CUDA--Accelerated-orange)](docs/LLAMA_CPP_INTEGRATION.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/Tests-17%20passing-brightgreen)](tests/)
-[![Aegis-QA](https://img.shields.io/badge/Aegis--QA-Active-purple)](docs/AEGIS_QA.md)
+[![Tests](https://img.shields.io/badge/Tests-20%20passing-brightgreen)](tests/)
 
 <br/>
 
-*An enterprise-grade knowledge retrieval engine that connects to your company's data sources (Confluence, Google Drive, Zendesk, and more), enforces Zero-Trust access controls at every layer, and delivers grounded, citation-backed answers directly inside Slack.*
+*An autonomous, security-first enterprise knowledge retrieval engine that integrates with your data connectors (Confluence, Google Drive, Zendesk, Slack), enforces Zero-Trust access control lists (ACL) at every layer, synthesizes grounded answers locally using llama.cpp (`qwen2.5-coder-7b.gguf`), and provides a modern dark-mode web interface.*
 
 </div>
 
@@ -20,496 +21,264 @@
 
 ## 📖 Table of Contents
 
-- [Why This Exists](#-why-this-exists)
-- [Architecture Overview](#-architecture-overview)
-- [Key Features](#-key-features)
-- [Quick Start](#-quick-start)
-- [Project Structure](#-project-structure)
-- [How It Works](#-how-it-works)
-- [Configuration](#-configuration)
-- [Connectors](#-connectors)
-- [Security Model](#-security-model)
-- [Retrieval Pipeline](#-retrieval-pipeline)
-- [Grounding & Synthesis](#-grounding--synthesis)
-- [Aegis-QA Platform](#-aegis-qa-platform)
-- [Testing](#-testing)
-- [Deployment](#-deployment)
-- [API Reference](#-api-reference)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Architectural Philosophy](#-architectural-philosophy)
+- [System Architecture](#-system-architecture)
+- [🦙 Llama.cpp Local Model Setup (`D:\llama4`)](#-llamacpp-local-model-setup-dllama4)
+- [✨ Web Application Frontend](#-web-application-frontend)
+- [🚀 Quick Start Guide](#-quick-start-guide)
+- [🔒 Zero-Trust Security Model](#-zero-trust-security-model)
+- [🔍 Hybrid RAG Mathematics](#-hybrid-rag-mathematics)
+- [✅ NLI Grounding & Intelligent Abstention](#-nli-grounding--intelligent-abstention)
+- [🛡 Aegis-QA Platform](#-aegis-qa-platform)
+- [📁 Project Directory Structure](#-project-directory-structure)
+- [📚 API Reference](#-api-reference)
+- [📄 License & Author](#-license--author)
 
 ---
 
-## 🎯 Why This Exists
+## 🎯 Architectural Philosophy
 
-Enterprise teams drown in scattered knowledge across Confluence, Google Drive, Zendesk, Slack, and dozens of internal tools. Existing search is broken:
+Enterprise knowledge retrieval fails when security, precision, and verifiability are neglected:
 
-- **Access controls leak**: Generic RAG systems don't enforce source-system permissions
-- **Hallucinations are dangerous**: Ungrounded AI answers in enterprise contexts cause real damage
-- **No auditability**: Compliance teams can't trace who accessed what
-- **Stale answers**: Static indexes serve outdated information with no decay awareness
-
-This engine solves all four problems with a production-hardened architecture designed for enterprise deployment.
+1. **Zero-Trust Permission Enforcement**: Generic RAG pipelines leak confidential data. Our engine enforces static ACL evaluation plus live source-API re-verification. **Deny lists always override allow lists**.
+2. **Hybrid Rank Fusion (BM25 + Dense Vector)**: Pure vector search misses exact error codes and acronyms. BM25 catches keywords while vectors handle semantic intent.
+3. **Local LLM Privacy via llama.cpp**: Powered by `llama-server.exe` running `qwen2.5-coder-7b.gguf` locally with GPU acceleration. No data leaves your infrastructure.
+4. **Autonomous Aegis-QA Engine**: Property-based invariants, mutation testing (logical gate inversion), and payload fuzzing ensure zero regressions over time.
 
 ---
 
-## 🏗 Architecture Overview
+## 🏗 System Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      SLACK INTERFACE                             │
-│                    @assistant ask ...                             │
-└──────────────┬──────────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                 ENTERPRISE KNOWLEDGE ENGINE                       │
-│  ┌─────────────┐  ┌──────────────┐  ┌───────────────────────┐   │
-│  │  Connectors  │  │  ACL Layer   │  │  Observability        │   │
-│  │  ─────────── │  │  ──────────  │  │  ─────────────────    │   │
-│  │  Confluence  │  │  ACLEvaluator│  │  AuditLedger          │   │
-│  │  GoogleDrive │  │  LivePermGate│  │  BenchmarkRunner      │   │
-│  │  Zendesk     │  │              │  │                       │   │
-│  │  Markdown    │  │              │  │                       │   │
-│  └──────┬──────┘  └──────┬───────┘  └───────────────────────┘   │
-│         │                │                                       │
-│         ▼                ▼                                       │
-│  ┌──────────────────────────────────────────────┐               │
-│  │           HYBRID RETRIEVER (RRF)              │               │
-│  │  ┌────────────────┐  ┌─────────────────────┐ │               │
-│  │  │ Sparse BM25    │  │ Dense Vector Search │ │               │
-│  │  │ (SparseSearch)  │  │  (VectorStore)      │ │               │
-│  │  └────────────────┘  └─────────────────────┘ │               │
-│  │         Reciprocal Rank Fusion + Decay        │               │
-│  └──────────────────────┬────────────────────────┘               │
-│                         │                                        │
-│                         ▼                                        │
-│  ┌─────────────────────────────────────────────┐                │
-│  │        GROUNDING VERIFIER (NLI)              │                │
-│  │  Claim Extraction → Entailment Scoring       │                │
-│  └──────────────────────┬──────────────────────┘                │
-│                         │                                        │
-│                         ▼                                        │
-│  ┌─────────────────────────────────────────────┐                │
-│  │        ANSWER GENERATOR                      │                │
-│  │  Synthesis → Confidence → Citations/Abstain  │                │
-│  └──────────────────────────────────────────────┘                │
-└──────────────────────────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                     AEGIS-QA PLATFORM                             │
-│  Property Invariants │ Mutation Testing │ Payload Fuzzing         │
-│  Benchmark Runner    │ Regression Suite │ Quality Governance       │
-└──────────────────────────────────────────────────────────────────┘
+                                  SLACK / WEB UI
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      ENTERPRISE KNOWLEDGE ENGINE                            │
+│                                                                             │
+│  ┌──────────────────────┐  ┌─────────────────────┐  ┌────────────────────┐ │
+│  │   CONNECTORS HUB     │  │  ZERO-TRUST ACL     │  │   AUDIT LEDGER     │ │
+│  │  ──────────────────  │  │  ─────────────────  │  │  ────────────────  │ │
+│  │  Confluence Wiki     │  │  ACLEvaluator       │  │  Query Tracing     │ │
+│  │  Google Drive        │  │  LivePermissionGate │  │  ACL Denial Logs   │ │
+│  │  Zendesk Help        │  │  Deny Precedence    │  │  Abstention Trail  │ │
+│  │  Slack Markdown      │  │                     │  │                    │ │
+│  └──────────┬───────────┘  └──────────┬──────────┘  └────────────────────┘ │
+│             │                         │                                     │
+│             ▼                         ▼                                     │
+│  ┌────────────────────────────────────────────────────────┐                 │
+│  │               HYBRID RETRIEVER (RRF)                   │                 │
+│  │  ┌─────────────────────────┐ ┌───────────────────────┐ │                 │
+│  │  │ Sparse BM25 Search      │ │ Dense Vector Search   │ │                 │
+│  │  │ (TF-IDF, k1=1.2, b=0.75) │ │ (128-Dim Cosine Sim)  │ │                 │
+│  │  └─────────────────────────┘ └───────────────────────┘ │                 │
+│  │         Reciprocal Rank Fusion + Temporal Decay        │                 │
+│  └───────────────────────────┬────────────────────────────┘                 │
+│                              │                                              │
+│                              ▼                                              │
+│  ┌────────────────────────────────────────────────────────┐                 │
+│  │              NLI GROUNDING VERIFIER                    │                 │
+│  │      Claim Extraction → Token Entailment Scoring       │                 │
+│  └───────────────────────────┬────────────────────────────┘                 │
+│                              │                                              │
+│                              ▼                                              │
+│  ┌────────────────────────────────────────────────────────┐                 │
+│  │       LOCAL LLM SYNTHESIS ENGINE (llama.cpp)           │                 │
+│  │  http://127.0.0.1:8080 (D:\llama4\qwen2.5-coder-7b)   │                 │
+│  └────────────────────────────────────────────────────────┘                 │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                       │
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           AEGIS-QA PLATFORM                                 │
+│  Property-Based Security Invariants │ Mutation Gate Inversion               │
+│  Payload Fuzzing (1000 Groups, SQLi)│ Automated Benchmarks                  │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✨ Key Features
+## 🦙 Llama.cpp Local Model Setup (`D:\llama4`)
 
-### 🔒 Zero-Trust Security
-- **Dual-Layer ACL Enforcement**: Pre-filter + live source-API verification
-- **Four Visibility Modes**: `public`, `tenant_internal`, `restricted_groups`, `explicit_users`
-- **Deny-List Precedence**: Deny rules always override allow rules
-- **Permission Caching**: TTL-based cache with bypass option
+The engine integrates directly with `llama.cpp` running on your local machine.
 
-### 🔍 Hybrid Retrieval
-- **Reciprocal Rank Fusion (RRF)**: Merges sparse (BM25) and dense (vector) search
-- **Temporal Decay**: Exponential recency weighting for fresher documents
-- **Authority Weighting**: Canonical documents boosted 25%
-- **Source Authority**: Confluence pages boosted 10%
+### Local Model Specifications
+- **Location**: `D:\llama4`
+- **Server Executable**: `D:\llama4\llama-server.exe`
+- **Model**: `D:\llama4\qwen2.5-coder-7b.gguf` (4.68 GB GGUF)
+- **Acceleration**: CUDA GPU (`ggml-cuda.dll`)
 
-### ✅ Grounded Answers
-- **Claim-Level Verification**: Every sentence checked against source evidence
-- **Entailment Scoring**: Token-overlap NLI for claim verification
-- **Intelligent Abstention**: Refuses to answer when evidence is insufficient
-- **Full Citations**: Every answer includes traceable source references
+### Starting the Local LLM Server
 
-### 🔌 Multi-Source Connectors
-- Confluence, Google Drive, Zendesk (built-in)
-- Extensible `BaseConnector` for custom sources
-- Unified `DocumentChunk` schema across all sources
+Run the pre-configured npm script:
+```bash
+npm run llama:server
+```
 
-### 📊 Observability
-- **Audit Ledger**: Every query, retrieval, and answer event logged
-- **Benchmark Runner**: Automated evaluation scenarios
-- **Full Trace IDs**: End-to-end query tracing
+Or execute directly in PowerShell:
+```powershell
+D:\llama4\llama-server.exe -m D:\llama4\qwen2.5-coder-7b.gguf -c 4096 --port 8080
+```
 
-### 🛡 Aegis-QA Platform
-- **Property-Based Testing**: Randomized security invariant verification
-- **Mutation Testing**: Logical gate inversion to verify test strength
-- **Payload Fuzzing**: Edge-case and adversarial input testing
-- **Regression Prevention**: Every bug caught once, never escapes again
+The `LlamaCppClient` (`src/llm/llamaClient.ts`) connects to `http://127.0.0.1:8080/v1/chat/completions`. If the server is offline, the engine seamlessly falls back to local NLI heuristic synthesis!
 
 ---
 
-## 🚀 Quick Start
+## ✨ Web Application Frontend
+
+A modern dark-mode, glassmorphic web app built with **React**, **Vite**, **TypeScript**, and **Tailwind CSS**.
+
+### Key Interface Features
+1. **Persona Switcher**: Switch between *Alex Vance (DevOps)*, *Elena Rostova (General Counsel)*, *Marcus Chen (PM)*, and *Jordan Miller (External Vendor)* to test Zero-Trust ACL filtering in real time.
+2. **Interactive RAG Inspector**: View BM25 vs Dense Vector scores, RRF math, and temporal recency decay curves.
+3. **ACL Security Lab**: Test UnifiedACL rules and verify Deny List Precedence.
+4. **Aegis-QA Dashboard**: Live test runner executing property invariants, mutation tests, and fuzzing payloads.
+5. **Compliance Audit Explorer**: Filterable audit trail with full query trace IDs.
+
+---
+
+## 🚀 Quick Start Guide
 
 ### Prerequisites
+- Node.js 20+
+- `llama.cpp` setup in `D:\llama4` (optional for local LLM mode)
 
-- [Node.js](https://nodejs.org/) 20+
-- [npm](https://www.npmjs.com/) 9+
-
-### Installation
+### Installation & Build
 
 ```bash
 # Clone the repository
 git clone https://github.com/ParthVarekar/enterprise_knowledge_assistance.git
 cd enterprise_knowledge_assistance
 
-# Install dependencies
+# Install backend dependencies
 npm install
 
-# Build the TypeScript project
+# Build TypeScript code
 npm run build
+
+# Install & build frontend dependencies
+cd frontend && npm install && npm run build && cd ..
 ```
 
-### Run the Demo
+### Running the System
 
 ```bash
+# 1. Run the Command-Line Demo
 npm run demo
-```
 
-This will:
-1. Initialize the engine with sample connectors (Confluence, Google Drive, Zendesk, Markdown)
-2. Ingest documents from all sources
-3. Run 4 demo queries with full ACL enforcement
-4. Display answers with confidence scores, citations, and audit trail
+# 2. Start the Local Llama.cpp LLM Server
+npm run llama:server
 
-### Run Tests
+# 3. Launch the Web Application Frontend
+npm run frontend:dev
+# Access UI at http://localhost:3000
 
-```bash
-# Run all tests (unit + integration + QA)
+# 4. Run full test suite (Unit + Aegis-QA)
 npm test
-
-# Run evaluation & QA tests only
-npm run test:eval
 ```
 
 ---
 
-## 📁 Project Structure
+## 🔒 Zero-Trust Security Model
+
+### Dual-Layer Defense-in-Depth
+
+#### Layer 1: Static ACL Evaluator (`ACLEvaluator`)
+Fast in-memory evaluation before candidates reach the vector store or retriever:
+
+```
+1. IF user_guid IN denied_users → DENY
+2. IF user_groups INTERSECT denied_groups → DENY
+3. CASE visibility OF:
+     public            → ALLOW
+     tenant_internal   → ALLOW
+     explicit_users    → ALLOW IF user_guid IN allowed_users
+     restricted_groups → ALLOW IF (user_guid IN allowed_users) OR (user_groups INTERSECT allowed_groups)
+4. DEFAULT → DENY
+```
+
+#### Layer 2: Live Permission Gate (`LivePermissionGate`)
+Re-evaluates candidates against live source-system APIs with a 300s TTL cache.
+
+---
+
+## 🔍 Hybrid RAG Mathematics
+
+### 1. BM25 Sparse Search
+```
+Score_BM25(q, d) = ∑ [ IDF(t) · (f(t, d) · (k1 + 1)) / (f(t, d) + k1 · (1 - b + b · (|d| / avgdl))) ]
+```
+
+### 2. Dense Vector Cosine Similarity
+```
+Sim_Cosine(A, B) = (A · B) / (||A|| · ||B||)
+```
+
+### 3. Reciprocal Rank Fusion (RRF)
+```
+RRF(d) = (1 / (k + rank_sparse(d))) + (1 / (k + rank_dense(d)))   [k = 60]
+```
+
+### 4. Temporal Recency Decay
+```
+Decay(d) = e^(-λ · age_in_days)   [λ = 0.005]
+```
+
+### 5. Final Score Calculation
+```
+FinalScore(d) = RRF(d) · AuthorityWeight · Decay(d)
+```
+
+---
+
+## 🛡 Aegis-QA Quality Platform
+
+| Component | Function | Status |
+|-----------|----------|--------|
+| **Security Symmetry Invariant** | 200 randomized group/user trials verifying access control symmetry | ✅ 100% Passing |
+| **Deny Precedence Invariant** | Verifies that deny list overrides allow rules across 100 trials | ✅ 100% Passing |
+| **Mutation Testing** | Logical gate inversion (Invert Deny Check, Remove Group Check, Public Denies All) | ✅ 100% Killed (3/3) |
+| **Payload Fuzzing** | 1000-group explosion, SQLi/Script injections, unicode user IDs | ✅ 100% Passing |
+
+---
+
+## 📁 Project Directory Structure
 
 ```
 enterprise-knowledge-assistant/
+├── frontend/                     # React + Vite Web Application
+│   ├── src/
+│   │   ├── components/           # Header, Sidebar, CitationModal, GroundingBadge
+│   │   ├── views/                # ChatView, RAGPipelineView, SecurityLabView, AegisQAView, etc.
+│   │   └── mockEngine/           # Interactive Engine Adapter
+│   ├── index.html
+│   └── vite.config.ts
 ├── src/
-│   ├── index.ts                    # Engine orchestrator & public API
-│   ├── demo.ts                     # Interactive demo script
-│   ├── types/
-│   │   └── index.ts                # Core type definitions (DocumentChunk, ACL, etc.)
-│   ├── security/
-│   │   ├── acl.ts                  # ACL evaluation engine
-│   │   └── livePermissionGate.ts   # Live source-API permission verification
-│   ├── retrieval/
-│   │   ├── sparseSearch.ts         # BM25 sparse text search
-│   │   ├── vectorStore.ts          # Dense vector similarity search
-│   │   └── hybridRetriever.ts      # RRF fusion + temporal decay
-│   ├── grounding/
-│   │   └── verifier.ts             # NLI claim-level grounding verifier
-│   ├── synthesis/
-│   │   └── generator.ts            # Answer generator with abstention logic
-│   ├── connectors/
-│   │   ├── base.ts                 # Abstract connector base class
-│   │   ├── confluence.ts           # Confluence connector
-│   │   ├── googleDrive.ts          # Google Drive connector
-│   │   ├── zendesk.ts              # Zendesk connector
-│   │   └── markdown.ts             # Markdown/raw text connector
-│   ├── observability/
-│   │   └── auditLedger.ts          # Audit trail & event logging
-│   ├── qa/
-│   │   ├── propertyInvariants.ts   # Property-based security invariants
-│   │   ├── mutationRunner.ts       # Mutation testing framework
-│   │   ├── payloadFuzzer.ts        # Adversarial payload fuzzer
-│   │   └── benchmarkRunner.ts      # Automated evaluation benchmark
-│   └── slack/
-│       └── server.ts               # Slack Bolt integration entry point
-├── tests/
-│   ├── unit.test.ts                # Unit tests (ACL, Search, Grounding, Audit)
-│   ├── eval.test.ts                # End-to-end engine evaluation tests
-│   └── aegisQA.test.ts             # Aegis-QA platform tests
-├── docs/
-│   ├── ARCHITECTURE.md             # Detailed architecture documentation
-│   ├── SECURITY.md                 # Security model deep dive
-│   ├── AEGIS_QA.md                 # QA platform documentation
-│   ├── CONNECTORS.md               # Connector development guide
-│   └── DEPLOYMENT.md               # Deployment & operations guide
+│   ├── connectors/               # Confluence, GoogleDrive, Zendesk, Markdown connectors
+│   ├── grounding/                # NLI claim-level grounding verifier
+│   ├── llm/                      # LlamaCppClient (D:\llama4 integration)
+│   ├── observability/            # AuditLedger event logger
+│   ├── qa/                       # Aegis-QA invariants, mutations, fuzzer, benchmarks
+│   ├── retrieval/                # SparseSearch (BM25), VectorStore, HybridRetriever
+│   ├── security/                 # ACLEvaluator, LivePermissionGate
+│   ├── synthesis/                # AnswerGenerator with Llama.cpp + fallback
+│   ├── types/                    # DocumentChunk, UnifiedACL, UserEntitlements
+│   ├── demo.ts                   # CLI Interactive Demo
+│   └── index.ts                  # Engine orchestrator
+├── tests/                        # Vitest unit, eval, and Aegis-QA test suites
+├── docs/                         # Exhaustive technical documentation
+│   ├── ARCHITECTURE.md
+│   ├── SECURITY.md
+│   ├── LLAMA_CPP_INTEGRATION.md
+│   ├── AEGIS_QA.md
+│   ├── CONNECTORS.md
+│   └── DEPLOYMENT.md
 ├── package.json
-├── tsconfig.json
-├── vitest.config.ts
-├── .gitignore
-├── LICENSE
 └── README.md
 ```
 
 ---
 
-## ⚙ How It Works
+## 📄 License & Author
 
-### 1. Document Ingestion
-Connectors pull documents from source systems and normalize them into `DocumentChunk` objects with unified ACLs, security classifications, and metadata.
-
-### 2. Dual-Index Storage
-Each chunk is indexed in both the **BM25 sparse index** (for keyword matching) and the **vector store** (for semantic similarity).
-
-### 3. Query Processing
-When a user asks a question:
-1. **ACL Pre-Filter**: Candidates are filtered against the user's entitlements
-2. **Hybrid Retrieval**: BM25 and vector results are fused via RRF
-3. **Temporal Decay**: Recent documents are boosted exponentially
-4. **Live ACL Gate**: Top candidates are verified against source-system APIs
-5. **Grounding**: The synthesized answer is checked claim-by-claim against evidence
-6. **Abstention/Answer**: If grounding is below threshold, the engine abstains
-
-### 4. Audit
-Every step is logged in the immutable audit ledger with trace IDs for compliance.
-
----
-
-## 🔧 Configuration
-
-```typescript
-const engine = new EnterpriseKnowledgeEngine({
-  tenantId: 'your-tenant-id',     // Multi-tenant isolation key
-  confidenceThreshold: 0.4,       // Min grounding score to answer (0-1)
-  maxCitations: 5,                // Max citations per answer
-  entailmentThreshold: 0.65,      // Min token-overlap for claim verification
-});
-```
-
-### Environment Variables (for Slack integration)
-
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `SLACK_BOT_TOKEN` | Slack Bot OAuth token | Yes (production) |
-| `SLACK_SIGNING_SECRET` | Slack app signing secret | Yes (production) |
-| `TENANT_ID` | Organization tenant identifier | Yes |
-
----
-
-## 🔌 Connectors
-
-### Built-in Connectors
-
-| Connector | Source | Security Classification |
-|-----------|--------|------------------------|
-| `ConfluenceConnector` | Confluence Wiki | internal/confidential |
-| `GoogleDriveConnector` | Google Drive | internal/restricted |
-| `ZendeskConnector` | Zendesk Help Center | public |
-| `MarkdownConnector` | Raw markdown/text | configurable |
-
-### Creating Custom Connectors
-
-```typescript
-import { BaseConnector, ConnectorConfig } from './connectors/base';
-import { DocumentChunk } from './types';
-
-class NotionConnector extends BaseConnector {
-  getSourceSystem() { return 'notion'; }
-
-  async fetchDocuments(): Promise<DocumentChunk[]> {
-    // 1. Call Notion API
-    // 2. Convert to DocumentChunk format
-    // 3. Map Notion permissions to UnifiedACL
-    return chunks;
-  }
-}
-
-// Register with the engine
-engine.registerConnector(new NotionConnector({ name: 'notion', tenantId: 'acme' }));
-```
-
-See [docs/CONNECTORS.md](docs/CONNECTORS.md) for the complete connector development guide.
-
----
-
-## 🔒 Security Model
-
-The security model implements **defense-in-depth** with two independent layers:
-
-### Layer 1: Static ACL Evaluation (`ACLEvaluator`)
-Pre-filters all candidates against the user's groups and explicit permissions. Deny lists always take precedence over allow lists.
-
-### Layer 2: Live Permission Gate (`LivePermissionGate`)
-Verifies each top candidate against the source system's live API to catch permission changes since the last sync.
-
-### Visibility Modes
-
-| Mode | Behavior |
-|------|----------|
-| `public` | Anyone can access |
-| `tenant_internal` | Any user in the same tenant |
-| `restricted_groups` | Only members of specified groups |
-| `explicit_users` | Only explicitly listed users |
-
-See [docs/SECURITY.md](docs/SECURITY.md) for the complete security deep dive.
-
----
-
-## 🔍 Retrieval Pipeline
-
-### Reciprocal Rank Fusion (RRF)
-
-The hybrid retriever combines sparse BM25 and dense vector rankings:
-
-```
-RRF(d) = 1/(k + rank_sparse(d)) + 1/(k + rank_dense(d))
-```
-
-Where `k=60` (default) controls rank sensitivity.
-
-### Temporal Decay
-
-```
-decay(d) = e^(-λ · age_in_days)
-```
-
-Where `λ=0.005` (default) provides gradual recency preference.
-
-### Final Score
-
-```
-final_score = normalized_rrf × authority_weight × temporal_decay
-```
-
----
-
-## ✅ Grounding & Synthesis
-
-### Claim-Level Verification
-The grounding verifier:
-1. **Extracts claims** from the synthesized answer (sentence splitting)
-2. **Scores each claim** against candidate chunks using token overlap
-3. **Marks claims** as verified/unverified based on entailment threshold
-
-### Intelligent Abstention
-When the overall grounding score falls below the confidence threshold, the engine refuses to answer rather than risk providing ungrounded information.
-
----
-
-## 🛡 Aegis-QA Platform
-
-The autonomous quality engineering platform ensures long-term reliability:
-
-### Property-Based Invariants
-- **Security Symmetry**: Group members get access, non-members don't (200 random iterations)
-- **Deny Precedence**: Deny list always overrides allow list
-- **Public Visibility**: Public documents always accessible
-
-### Mutation Testing
-Three mutants that invert critical logical gates — the test suite must kill all three:
-1. Invert deny check
-2. Remove group membership check
-3. Public visibility denies all
-
-### Payload Fuzzing
-- Empty ACL lists
-- 1000-group membership explosion
-- Unicode, emoji, SQL injection in user IDs
-- Empty/nullish field handling
-
-See [docs/AEGIS_QA.md](docs/AEGIS_QA.md) for the full QA platform documentation.
-
----
-
-## 🧪 Testing
-
-```bash
-# Run all 17 tests
-npm test
-
-# Run with verbose output
-npx vitest run --reporter=verbose
-
-# Run specific test file
-npx vitest run tests/unit.test.ts
-
-# Run QA-only tests
-npm run test:eval
-```
-
-### Test Coverage
-
-| Suite | Tests | Coverage |
-|-------|-------|----------|
-| Unit (ACL, Search, Grounding, Audit) | 11 | Core logic |
-| End-to-End Evaluation | 4 | Full pipeline |
-| Aegis-QA (Invariants, Mutations, Fuzzing) | 5 | Security assurance |
-| **Total** | **17+** | **All critical paths** |
-
----
-
-## 🚢 Deployment
-
-### Local Development
-```bash
-npm run demo    # Run interactive demo
-npm run server  # Start Slack server (configure env vars first)
-```
-
-### Production Checklist
-- [ ] Set `SLACK_BOT_TOKEN` and `SLACK_SIGNING_SECRET`
-- [ ] Configure real connector API credentials
-- [ ] Replace mock vector store with Qdrant/Pinecone/Weaviate
-- [ ] Replace token-overlap NLI with transformer-based entailment model
-- [ ] Set up monitoring dashboards for audit ledger
-- [ ] Configure log rotation for audit records
-
-See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the complete deployment guide.
-
----
-
-## 📚 API Reference
-
-### `EnterpriseKnowledgeEngine`
-
-```typescript
-// Initialize
-const engine = new EnterpriseKnowledgeEngine(config);
-
-// Register data sources
-engine.registerConnector(connector);
-
-// Ingest all documents
-const result = await engine.ingestAll();
-// → { totalChunks: number, sources: string[] }
-
-// Query with ACL enforcement
-const answer = await engine.query(queryText, userEntitlements, domainFilters?);
-// → GroundedAnswer { answer_text, claims, citations, confidence_score, is_abstained }
-
-// Access audit trail
-engine.getAuditLedger().query({ action: 'query', limit: 100 });
-```
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-Please ensure all tests pass before submitting PRs:
-```bash
-npm test
-```
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-
-**Built with ❤️ by [Parth Varekar](https://github.com/ParthVarekar)**
-
-*Enterprise Knowledge. Zero Trust. Grounded Truth.*
-
-</div>
-]]>
+Built by **[Parth Varekar](https://github.com/ParthVarekar)** under the **MIT License**.
