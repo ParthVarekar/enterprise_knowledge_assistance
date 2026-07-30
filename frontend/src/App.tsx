@@ -10,7 +10,7 @@ function AppContent() {
   return (
     <div className="min-h-screen flex flex-col bg-[#F8FAFC]">
       {/* Plug-and-Play Top Integration Mode Bar */}
-      <div className="bg-slate-900 text-slate-100 px-4 py-2 text-xs font-mono flex items-center justify-between border-b border-slate-800 select-none z-50">
+      <div className="bg-slate-900 text-slate-100 px-4 py-2 text-xs font-mono flex items-center justify-between border-b border-slate-800 select-none z-30">
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-1.5 font-bold text-indigo-400">
             <Box className="w-4 h-4 text-indigo-400" />
