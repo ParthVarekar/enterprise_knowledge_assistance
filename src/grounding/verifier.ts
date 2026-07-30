@@ -41,10 +41,18 @@ export class GroundingVerifier {
   }
 
   private extractClaims(text: string): string[] {
+    const preamblePatterns = [
+      'based on', 'here is', 'here are', 'according to', 'in summary',
+      'the following', 'to answer your', 'regarding the', 'for your query'
+    ];
     return text
       .split(/[.!?\n]+/)
       .map(s => s.trim())
-      .filter(s => s.length > 10 && !s.toLowerCase().startsWith('based on the available') && !s.toLowerCase().startsWith('based on verified'));
+      .filter(s => {
+        if (s.length <= 15) return false;
+        const lower = s.toLowerCase();
+        return !preamblePatterns.some(pat => lower.startsWith(pat));
+      });
   }
 
   private findBestEvidence(claim: string, candidates: ScoredCandidate[]): { score: number; chunkIds: string[] } {

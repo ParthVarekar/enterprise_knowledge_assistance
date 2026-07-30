@@ -175,7 +175,7 @@ export class EngineAdapter {
     },
   ];
 
-  public static async executeQuery(queryText: string, persona: UserPersona): Promise<QueryResult> {
+  public static executeQuerySync(queryText: string, persona: UserPersona): QueryResult {
     const start = performance.now();
     const queryTrimmed = queryText.trim();
     const queryLower = queryTrimmed.toLowerCase();
@@ -186,7 +186,7 @@ export class EngineAdapter {
     const isGreeting = greetings.includes(queryLower) || queryLower.startsWith('hi ') || queryLower.startsWith('hello ');
 
     if (isGreeting) {
-      const latencyMs = Number((performance.now() - start + 25).toFixed(1));
+      const latencyMs = Number((performance.now() - start + 15).toFixed(1));
       return {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
@@ -211,7 +211,6 @@ export class EngineAdapter {
 
     // 1. ACL Filter Candidates based on BOTH Group Membership AND Fluid Clearance Level
     const eligibleDocs = this.docs.filter(doc => {
-      // Fluid clearance level gate check
       if (level < doc.minClearanceLevel) return false;
 
       if (doc.visibility === 'public') return true;
@@ -229,7 +228,7 @@ export class EngineAdapter {
     const hasLegalAccess = (persona.groups.includes('legal-team') || persona.groups.includes('executives')) && level >= 4;
 
     if (isRestrictedQuery && !hasLegalAccess) {
-      const latencyMs = Number((performance.now() - start + 30).toFixed(1));
+      const latencyMs = Number((performance.now() - start + 20).toFixed(1));
       return {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
@@ -258,7 +257,7 @@ export class EngineAdapter {
 
     // 2. Score Candidates with STRICT NORMALIZATION [0.0, 1.0]
     const tokens = queryLower.split(/\s+/).filter(t => t.length > 2);
-    const candidateScores = eligibleDocs.map(doc => {
+    const candidateScores = this.docs.map(doc => {
       let matches = 0;
       for (const t of tokens) {
         if (doc.content.toLowerCase().includes(t) || doc.title.toLowerCase().includes(t)) {
@@ -266,24 +265,21 @@ export class EngineAdapter {
         }
       }
 
-      // Normalized Sparse Score [0, 1]
       const rawSparse = tokens.length > 0 ? (matches / tokens.length) : 0;
       const sparseScore = Math.min(1.0, Math.max(0.0, rawSparse));
 
-      // Normalized Dense Score [0, 1]
       const rawDense = matches > 0 ? 0.70 + Math.min(0.28, matches * 0.07) : 0.30;
       const denseScore = Math.min(1.0, Math.max(0.0, rawDense));
 
-      // Reciprocal Rank Fusion [0, 1]
       const rrfScore = matches > 0 ? 0.85 : 0.20;
 
-      // Temporal Decay [0, 1]
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
 
-      // Final Bounded Composite Score [0.0, 1.0]
       const unscaledFinal = (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay;
       const finalScore = Number(Math.min(0.98, Math.max(0.0, unscaledFinal)).toFixed(3));
+
+      const aclPassed = eligibleDocs.includes(doc);
 
       return {
         chunkId: doc.id,
@@ -294,7 +290,7 @@ export class EngineAdapter {
         rrfScore: Number(rrfScore.toFixed(3)),
         temporalDecay: Number(temporalDecay.toFixed(3)),
         finalScore,
-        aclPassed: true,
+        aclPassed,
         content: doc.content,
         url: doc.url,
         updated: doc.updated,
@@ -302,42 +298,12 @@ export class EngineAdapter {
       };
     }).sort((a, b) => b.finalScore - a.finalScore);
 
-    const bestMatches = candidateScores.length > 0 ? candidateScores.slice(0, 3) : [];
-    
-    // Call local Llama.cpp GPU server on port 8085 if available
-    let llamaAnswer: string | null = null;
-    try {
-      const topContext = bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n');
-      const response = await fetch('http://127.0.0.1:8085/v1/chat/completions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: `You are Susurrus Enterprise Knowledge Assistant. Answer the user query using the provided context for a user operating at Level ${level} (${persona.role}).` },
-            { role: 'user', content: `Context:\n${topContext || 'No specific document context.'}\n\nQuestion: ${queryTrimmed}` }
-          ],
-          max_tokens: 350,
-          temperature: 0.3
-        }),
-        signal: AbortSignal.timeout(6000)
-      });
-      if (response.ok) {
-        const json: any = await response.json();
-        if (json?.choices?.[0]?.message?.content) {
-          llamaAnswer = json.choices[0].message.content;
-        }
-      }
-    } catch (e) {
-      // Local llama server offline or timed out, fallback to synthesized answer
-    }
+    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore > 0.30).slice(0, 3);
 
-    const answerText = llamaAnswer 
-      ? llamaAnswer 
-      : bestMatches.length > 0 
-        ? `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`
-        : `Here is information relevant to your request:\n\nOur system indexes Confluence, Google Drive, Zendesk, and Slack. Please specify your query regarding rate limiting, deployment runbooks, MFA setup, or subscription plans.`;
+    const answerText = bestMatches.length > 0
+      ? `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`
+      : `Here is information relevant to your request:\n\nOur system indexes Confluence, Google Drive, Zendesk, and Slack. Please specify your query regarding rate limiting, deployment runbooks, MFA setup, or subscription plans.`;
 
-    // Strictly bounded Confidence Score [0.10, 0.98]
     const topScore = bestMatches[0]?.finalScore || 0.40;
     const rawConfidence = 0.72 + (topScore * 0.25);
     const confidenceScore = Number(Math.min(0.98, Math.max(0.10, rawConfidence)).toFixed(2));
@@ -360,7 +326,7 @@ export class EngineAdapter {
       classification: m.classification,
     }));
 
-    const latencyMs = Number((performance.now() - start + 35).toFixed(1));
+    const latencyMs = Number((performance.now() - start + 25).toFixed(1));
 
     return {
       queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -375,5 +341,41 @@ export class EngineAdapter {
       latencyMs,
       timestamp: new Date().toLocaleTimeString(),
     };
+  }
+
+  public static async executeQuery(queryText: string, persona: UserPersona): Promise<QueryResult> {
+    const syncResult = this.executeQuerySync(queryText, persona);
+    if (syncResult.isAbstained || syncResult.candidates.length === 0) {
+      return syncResult;
+    }
+
+    // Call local Llama.cpp GPU server on port 8085 if available
+    try {
+      const bestMatches = syncResult.candidates.filter(c => c.aclPassed).slice(0, 3);
+      const topContext = bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n');
+      const response = await fetch('http://127.0.0.1:8085/v1/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: `You are Susurrus Enterprise Knowledge Assistant. Answer the user query using the provided context for a user operating at Level ${persona.clearanceLevel || 2} (${persona.role}).` },
+            { role: 'user', content: `Context:\n${topContext || 'No specific document context.'}\n\nQuestion: ${queryText.trim()}` }
+          ],
+          max_tokens: 350,
+          temperature: 0.3
+        }),
+        signal: AbortSignal.timeout(6000)
+      });
+      if (response.ok) {
+        const json: any = await response.json();
+        if (json?.choices?.[0]?.message?.content) {
+          syncResult.answerText = json.choices[0].message.content;
+        }
+      }
+    } catch (e) {
+      // Local llama server offline or timed out, fallback to sync synthesized answer
+    }
+
+    return syncResult;
   }
 }
