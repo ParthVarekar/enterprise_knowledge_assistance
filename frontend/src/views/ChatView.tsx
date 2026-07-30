@@ -91,18 +91,21 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
     },
   ];
 
-  const handleSend = (textToSend?: string) => {
+  const handleSend = async (textToSend?: string) => {
     const q = textToSend || inputQuery;
     if (!q.trim() || isProcessing) return;
 
     setIsProcessing(true);
     if (!textToSend) setInputQuery('');
 
-    setTimeout(() => {
-      const result = EngineAdapter.executeQuery(q, currentPersona);
+    try {
+      const result = await EngineAdapter.executeQuery(q, currentPersona);
       setHistory(prev => [result, ...prev]);
+    } catch (err) {
+      console.error('Error executing query:', err);
+    } finally {
       setIsProcessing(false);
-    }, 450);
+    }
   };
 
   const toggleClaims = (queryId: string) => {
