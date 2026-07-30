@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserPersona, PRESET_PERSONAS, EngineAdapter, QueryResult } from '../mockEngine/engineAdapter';
+import { UserPersona, PRESET_PERSONAS, EngineAdapter, QueryResult, PRESENTATION_DEMO_RESULTS } from '../mockEngine/engineAdapter';
 import { TabType } from '../components/Sidebar';
 
 export interface EKRSConfig {
@@ -53,7 +53,7 @@ export const EKRSProvider: React.FC<EKRSProviderProps> = ({ config, children }) 
   const [viewMode, setViewMode] = useState<'dashboard' | 'widget'>(
     mergedConfig.defaultViewMode || 'dashboard'
   );
-  const [history, setHistory] = useState<QueryResult[]>([]);
+  const [history, setHistory] = useState<QueryResult[]>(PRESENTATION_DEMO_RESULTS);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const executeQuery = async (queryText: string, personaOverride?: UserPersona): Promise<QueryResult> => {

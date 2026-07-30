@@ -379,3 +379,119 @@ export class EngineAdapter {
     return syncResult;
   }
 }
+
+export const PRESENTATION_DEMO_RESULTS: QueryResult[] = [
+  {
+    queryId: 'demo_q1',
+    queryText: 'How does our API gateway handle rate limiting?',
+    user: PRESET_PERSONAS[0],
+    answerText: 'Our API gateway uses a microservice mesh pattern with service discovery via Consul. Rate limiting is enforced at the edge using token bucket algorithms with configurable burst rates of 1000 requests/min for standard tier and 10,000 requests/min for enterprise tier. Authentication flows through OAuth 2.0 with PKCE for public clients.',
+    confidenceScore: 0.95,
+    isAbstained: false,
+    citations: [
+      {
+        citationIndex: 1,
+        chunkId: 'CONF-001-c0',
+        documentTitle: 'API Gateway Architecture & Token Bucket Algorithm',
+        sourceSystem: 'confluence',
+        sourceUrl: 'https://wiki.acme.com/spaces/ENG/pages/CONF-001',
+        lastUpdatedAt: '2026-07-28T10:00:00Z',
+        excerpt: 'Our API gateway uses a microservice mesh pattern with service discovery via Consul. Rate limiting is enforced at the edge using token bucket algorithms with configurable burst rates of 1000 requests/min for standard tier and 10,000 requests/min for enterprise tier.',
+        classification: 'internal',
+      }
+    ],
+    claims: [
+      {
+        claimSentence: 'Rate limiting is enforced at the edge using token bucket algorithms with configurable burst rates.',
+        supportingChunkIds: ['CONF-001-c0'],
+        entailmentScore: 0.96,
+        isVerified: true,
+      }
+    ],
+    candidates: [
+      {
+        chunkId: 'CONF-001-c0',
+        documentTitle: 'API Gateway Architecture & Token Bucket Algorithm',
+        sourceSystem: 'confluence',
+        sparseScore: 4.12,
+        denseScore: 0.88,
+        rrfScore: 0.94,
+        temporalDecay: 0.99,
+        finalScore: 0.91,
+        aclPassed: true,
+      }
+    ],
+    latencyMs: 22.4,
+    timestamp: '8:55:00 PM',
+  },
+  {
+    queryId: 'demo_q2',
+    queryText: 'What is the production deployment and rollback process?',
+    user: PRESET_PERSONAS[0],
+    answerText: 'Production deployments follow a blue-green deployment strategy with automatic rollback triggers set at a 5% error rate threshold. Canary deployments are promoted after 15 minutes of stable metrics including p99 latency under 200ms and zero critical alerts. Emergency rollback command: kubectl rollout undo deployment/api-gateway.',
+    confidenceScore: 0.92,
+    isAbstained: false,
+    citations: [
+      {
+        citationIndex: 1,
+        chunkId: 'CONF-002-c0',
+        documentTitle: 'Blue-Green Deployment Runbook & Incident Protocols',
+        sourceSystem: 'confluence',
+        sourceUrl: 'https://wiki.acme.com/spaces/OPS/pages/CONF-002',
+        lastUpdatedAt: '2026-07-25T14:30:00Z',
+        excerpt: 'Production deployments follow a blue-green deployment strategy with automatic rollback triggers set at a 5% error rate threshold. Canary deployments are promoted after 15 minutes of stable metrics.',
+        classification: 'confidential',
+      }
+    ],
+    claims: [
+      {
+        claimSentence: 'Production deployments follow a blue-green deployment strategy with automatic rollback triggers.',
+        supportingChunkIds: ['CONF-002-c0'],
+        entailmentScore: 0.93,
+        isVerified: true,
+      }
+    ],
+    candidates: [
+      {
+        chunkId: 'CONF-002-c0',
+        documentTitle: 'Blue-Green Deployment Runbook & Incident Protocols',
+        sourceSystem: 'confluence',
+        sparseScore: 3.85,
+        denseScore: 0.84,
+        rrfScore: 0.91,
+        temporalDecay: 0.97,
+        finalScore: 0.88,
+        aclPassed: true,
+      }
+    ],
+    latencyMs: 25.1,
+    timestamp: '8:57:55 PM',
+  },
+  {
+    queryId: 'demo_q3',
+    queryText: 'What are the details of the customer Data Processing Agreement (DPA)?',
+    user: PRESET_PERSONAS[0],
+    answerText: "I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current fluid clearance is Level 4.",
+    confidenceScore: 0.12,
+    isAbstained: true,
+    abstentionReason: "Zero-Trust Role Restriction: User Alex Vance (Staff Infrastructure Engineer) operates at Level 4 and lacks required 'legal-team' or 'executives' group entitlement.",
+    citations: [],
+    claims: [],
+    candidates: [
+      {
+        chunkId: 'GDRIVE-002-c0',
+        documentTitle: 'Restricted Customer Data Processing Agreement (DPA)',
+        sourceSystem: 'google_drive',
+        sparseScore: 4.50,
+        denseScore: 0.91,
+        rrfScore: 0.96,
+        temporalDecay: 0.95,
+        finalScore: 0.92,
+        aclPassed: false,
+      }
+    ],
+    latencyMs: 28.0,
+    timestamp: '8:58:00 PM',
+  }
+];
+
