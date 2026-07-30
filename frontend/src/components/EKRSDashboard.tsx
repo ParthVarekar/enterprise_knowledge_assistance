@@ -22,12 +22,25 @@ export const EKRSDashboard: React.FC = () => {
         <Header currentPersona={currentPersona} onSelectPersona={setCurrentPersona} />
 
         <main className="flex-1 overflow-y-auto pb-12">
-          {activeTab === 'chat' && <ChatView currentPersona={currentPersona} />}
-          {activeTab === 'pipeline' && <RAGPipelineView />}
-          {activeTab === 'security' && <SecurityLabView />}
-          {activeTab === 'qa' && <AegisQAView />}
-          {activeTab === 'connectors' && <ConnectorsView />}
-          {activeTab === 'audit' && <AuditLedgerView />}
+          {/* Preserve view component instances in DOM to keep chat history, scroll state & active inputs intact */}
+          <div className={activeTab === 'chat' ? 'block' : 'hidden'}>
+            <ChatView currentPersona={currentPersona} />
+          </div>
+          <div className={activeTab === 'pipeline' ? 'block' : 'hidden'}>
+            <RAGPipelineView />
+          </div>
+          <div className={activeTab === 'security' ? 'block' : 'hidden'}>
+            <SecurityLabView />
+          </div>
+          <div className={activeTab === 'qa' ? 'block' : 'hidden'}>
+            <AegisQAView />
+          </div>
+          <div className={activeTab === 'connectors' ? 'block' : 'hidden'}>
+            <ConnectorsView />
+          </div>
+          <div className={activeTab === 'audit' ? 'block' : 'hidden'}>
+            <AuditLedgerView />
+          </div>
         </main>
       </div>
     </div>

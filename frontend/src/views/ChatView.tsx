@@ -27,6 +27,8 @@ import {
   BookOpen
 } from 'lucide-react';
 
+import { useEKRS } from '../context/EKRSContext';
+
 interface ChatViewProps {
   currentPersona: UserPersona;
 }
@@ -39,9 +41,8 @@ interface PromptChip {
 }
 
 export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
+  const { history, isProcessing, executeQuery, clearHistory } = useEKRS();
   const [inputQuery, setInputQuery] = useState('');
-  const [history, setHistory] = useState<QueryResult[]>([]);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [selectedCitation, setSelectedCitation] = useState<any>(null);
   const [expandedClaims, setExpandedClaims] = useState<Record<string, boolean>>({});
 
@@ -100,25 +101,16 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
     const q = textToSend || inputQuery;
     if (!q.trim() || isProcessing) return;
 
-    setIsProcessing(true);
     if (!textToSend) setInputQuery('');
-
     try {
-      const result = await EngineAdapter.executeQuery(q, currentPersona);
-      setHistory(prev => [result, ...prev]);
+      await executeQuery(q, currentPersona);
     } catch (err) {
       console.error('Error executing query:', err);
-    } finally {
-      setIsProcessing(false);
     }
   };
 
   const toggleClaims = (queryId: string) => {
     setExpandedClaims(prev => ({ ...prev, [queryId]: !prev[queryId] }));
-  };
-
-  const clearHistory = () => {
-    setHistory([]);
   };
 
   const getClassificationBadge = (classification: string) => {
