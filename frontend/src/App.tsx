@@ -14,7 +14,7 @@ export default function App() {
   const [currentPersona, setCurrentPersona] = useState<UserPersona>(PRESET_PERSONAS[0]);
 
   return (
-    <div className="flex min-h-screen bg-slate-950 font-sans text-slate-100 antialiased selection:bg-[#2563eb] selection:text-[#ffffff]">
+    <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 antialiased selection:bg-[#4f46e5] selection:text-[#ffffff]">
       {/* Navigation Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 

@@ -1,707 +1,289 @@
 import React, { useState } from 'react';
 import { 
   ShieldCheck, 
-  Lock, 
+  ShieldAlert, 
+  User, 
+  FileText, 
+  Play, 
   CheckCircle2, 
   XCircle, 
-  Play, 
+  Lock, 
+  Terminal, 
   Copy, 
   Check, 
-  User, 
-  Users as GroupIcon, 
-  ShieldAlert, 
-  Key, 
-  FileCode, 
-  Layers, 
+  Filter, 
   Zap, 
-  Globe, 
-  RefreshCw 
+  Key,
+  Layers
 } from 'lucide-react';
-
-type VisibilityMode = 'restricted_groups' | 'explicit_users' | 'tenant_internal' | 'public' | 'confidential_executive';
-type SecurityClearance = 'Unclassified' | 'Confidential' | 'Restricted' | 'Secret' | 'Top Secret';
-
-interface ACLPreset {
-  name: string;
-  desc: string;
-  visibility: VisibilityMode;
-  allowedGroups: string;
-  allowedUsers: string;
-  deniedUsers: string;
-  clearance: SecurityClearance;
-  tenantId: string;
-}
-
-const PRESETS: ACLPreset[] = [
-  {
-    name: '🛠️ Engineering Architecture Doc',
-    desc: 'Restricted to engineering & devops groups with Secret clearance required.',
-    visibility: 'restricted_groups',
-    allowedGroups: 'engineering, devops',
-    allowedUsers: 'user-101',
-    deniedUsers: '',
-    clearance: 'Secret',
-    tenantId: 'tenant-acme-corp',
-  },
-  {
-    name: '🔒 Executive Board Memo',
-    desc: 'Strictly restricted to executive group with Top Secret clearance requirement.',
-    visibility: 'confidential_executive',
-    allowedGroups: 'executive, board',
-    allowedUsers: 'sarah.ceo@acme.com',
-    deniedUsers: '',
-    clearance: 'Top Secret',
-    tenantId: 'tenant-acme-corp',
-  },
-  {
-    name: '🌐 Public FAQ & Release Notes',
-    desc: 'Unclassified public knowledge base document accessible by anyone.',
-    visibility: 'public',
-    allowedGroups: '',
-    allowedUsers: '',
-    deniedUsers: '',
-    clearance: 'Unclassified',
-    tenantId: 'tenant-acme-corp',
-  },
-  {
-    name: '🚫 Deny Precedence Edge Case',
-    desc: 'User user-999 is in engineering group but explicitly denied via override invariant.',
-    visibility: 'restricted_groups',
-    allowedGroups: 'engineering, devops',
-    allowedUsers: '',
-    deniedUsers: 'user-999',
-    clearance: 'Confidential',
-    tenantId: 'tenant-acme-corp',
-  },
-];
-
-const CLEARANCE_RANKS: Record<SecurityClearance, number> = {
-  'Unclassified': 0,
-  'Confidential': 1,
-  'Restricted': 2,
-  'Secret': 3,
-  'Top Secret': 4,
-};
+import { PRESET_PERSONAS, UserPersona } from '../mockEngine/engineAdapter';
 
 export const SecurityLabView: React.FC = () => {
-  // Schema configuration state
-  const [visibility, setVisibility] = useState<VisibilityMode>('restricted_groups');
-  const [allowedGroups, setAllowedGroups] = useState('engineering, devops');
-  const [allowedUsers, setAllowedUsers] = useState('user-101');
-  const [deniedUsers, setDeniedUsers] = useState('');
-  const [docClearance, setDocClearance] = useState<SecurityClearance>('Secret');
-  const [docTenantId, setDocTenantId] = useState('tenant-acme-corp');
+  const [selectedPersona, setSelectedPersona] = useState<UserPersona>(PRESET_PERSONAS[0]);
+  const [targetDoc, setTargetDoc] = useState<string>('GDRIVE-002');
+  const [customGroups, setCustomGroups] = useState<string>('engineering, devops');
+  const [clearanceLevel, setClearanceLevel] = useState<number>(4);
+  const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [evalLog, setEvalLog] = useState<string>('Select parameters and run Live Evaluation Sandbox.');
 
-  // Requesting user entitlement state
-  const [testUserId, setTestUserId] = useState('user-101');
-  const [testUserGroups, setTestUserGroups] = useState('engineering');
-  const [testUserClearance, setTestUserClearance] = useState<SecurityClearance>('Secret');
-  const [testUserTenantId, setTestUserTenantId] = useState('tenant-acme-corp');
-  const [mfaVerified, setMfaVerified] = useState(true);
-  const [corporateVpn, setCorporateVpn] = useState(true);
+  const DOCUMENTS = [
+    { id: 'CONF-001', title: 'API Gateway Architecture', classification: 'Internal', minLevel: 2, allowed: ['engineering', 'devops'] },
+    { id: 'CONF-002', title: 'Deployment Runbook', classification: 'Confidential', minLevel: 3, allowed: ['devops', 'engineering'] },
+    { id: 'GDRIVE-001', title: 'Engineering Onboarding Guide', classification: 'Internal', minLevel: 2, allowed: ['all-employees'] },
+    { id: 'GDRIVE-002', title: 'Restricted Customer DPA', classification: 'Restricted', minLevel: 4, allowed: ['legal-team', 'executives'] },
+    { id: 'ZD-001', title: 'Public MFA Setup Guide', classification: 'Public', minLevel: 1, allowed: [] },
+  ];
 
-  // UI state
-  const [copiedSchema, setCopiedSchema] = useState(false);
-  const [activePreset, setActivePreset] = useState<string | null>(PRESETS[0].name);
+  const currentDocObj = DOCUMENTS.find(d => d.id === targetDoc) || DOCUMENTS[3];
+  
+  const parsedGroups = customGroups.split(',').map(g => g.trim()).filter(Boolean);
+  const hasGroupAccess = currentDocObj.classification === 'Public' || 
+                         currentDocObj.classification === 'Internal' ||
+                         currentDocObj.allowed.some(g => parsedGroups.includes(g));
+  const hasLevelAccess = clearanceLevel >= currentDocObj.minLevel;
+  const isAccessGranted = hasGroupAccess && hasLevelAccess;
 
-  // Apply predefined preset
-  const applyPreset = (preset: ACLPreset) => {
-    setActivePreset(preset.name);
-    setVisibility(preset.visibility);
-    setAllowedGroups(preset.allowedGroups);
-    setAllowedUsers(preset.allowedUsers);
-    setDeniedUsers(preset.deniedUsers);
-    setDocClearance(preset.clearance);
-    setDocTenantId(preset.tenantId);
-  };
-
-  // Evaluate ACL Rules
-  const runACLCheck = () => {
-    const steps: { name: string; status: 'PASS' | 'BLOCKED'; detail: string }[] = [];
-
-    // Step 1: Tenant Isolation Check
-    if (visibility !== 'public' && testUserTenantId !== docTenantId) {
-      steps.push({
-        name: 'Step 1: Tenant Boundary Verification',
-        status: 'BLOCKED',
-        detail: `Tenant Mismatch! User tenant [${testUserTenantId}] does not match document tenant [${docTenantId}].`,
-      });
-      return {
-        allowed: false,
-        reason: `Cross-Tenant Isolation Invariant Violation: Requesting user tenant (${testUserTenantId}) is forbidden from accessing document owned by (${docTenantId}).`,
-        steps,
-        failedStep: 1,
-      };
-    } else {
-      steps.push({
-        name: 'Step 1: Tenant Boundary Verification',
-        status: 'PASS',
-        detail: `User tenant [${testUserTenantId}] matches document tenant boundary [${docTenantId}].`,
-      });
-    }
-
-    // Step 2: Deny Precedence Invariant Check
-    const deniedList = deniedUsers.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    if (deniedList.includes(testUserId.trim().toLowerCase())) {
-      steps.push({
-        name: 'Step 2: Explicit Deny List Precedence',
-        status: 'BLOCKED',
-        detail: `User ID [${testUserId}] found in document explicit Deny list. Deny Precedence rule overrides all allow conditions.`,
-      });
-      return {
-        allowed: false,
-        reason: `Explicit Deny Precedence Invariant Enforced: User ID (${testUserId}) is explicitly blocked by document security policy override.`,
-        steps,
-        failedStep: 2,
-      };
-    } else {
-      steps.push({
-        name: 'Step 2: Explicit Deny List Precedence',
-        status: 'PASS',
-        detail: `User ID [${testUserId}] is not present on the explicit deny list.`,
-      });
-    }
-
-    // Step 3: Security Clearance Verification
-    const docRank = CLEARANCE_RANKS[docClearance];
-    const userRank = CLEARANCE_RANKS[testUserClearance];
-    if (userRank < docRank) {
-      steps.push({
-        name: 'Step 3: Security Clearance Rank',
-        status: 'BLOCKED',
-        detail: `User clearance level [${testUserClearance}] is below document required clearance [${docClearance}].`,
-      });
-      return {
-        allowed: false,
-        reason: `Insufficient Security Clearance: User clearance level (${testUserClearance}) fails to meet document clearance requirement (${docClearance}).`,
-        steps,
-        failedStep: 3,
-      };
-    } else {
-      steps.push({
-        name: 'Step 3: Security Clearance Rank',
-        status: 'PASS',
-        detail: `User clearance level [${testUserClearance}] satisfies or exceeds document requirement [${docClearance}].`,
-      });
-    }
-
-    // Step 4: Visibility & Entitlement Evaluation
-    if (visibility === 'public') {
-      steps.push({
-        name: 'Step 4: Entitlements & Visibility Evaluation',
-        status: 'PASS',
-        detail: 'Document visibility set to Public. Granted access to all requesting clients.',
-      });
-      return {
-        allowed: true,
-        reason: 'Visibility Mode set to Public: Unrestricted access granted to public document.',
-        steps,
-      };
-    }
-
-    if (visibility === 'tenant_internal') {
-      steps.push({
-        name: 'Step 4: Entitlements & Visibility Evaluation',
-        status: 'PASS',
-        detail: `Document visibility set to Tenant Internal. User belongs to verified tenant [${testUserTenantId}].`,
-      });
-      return {
-        allowed: true,
-        reason: `Tenant Internal Access Granted: User belongs to organization tenant (${testUserTenantId}).`,
-        steps,
-      };
-    }
-
-    if (visibility === 'explicit_users') {
-      const allowedUserList = allowedUsers.split(',').map(s => s.trim().toLowerCase());
-      const isUserAllowed = allowedUserList.includes(testUserId.trim().toLowerCase());
-      if (isUserAllowed) {
-        steps.push({
-          name: 'Step 4: Entitlements & Visibility Evaluation',
-          status: 'PASS',
-          detail: `User ID [${testUserId}] matched explicit allowed user list.`,
-        });
-        return {
-          allowed: true,
-          reason: `Explicit User Entitlement Match: User ID (${testUserId}) found in document's explicit allowed users whitelist.`,
-          steps,
-        };
-      } else {
-        steps.push({
-          name: 'Step 4: Entitlements & Visibility Evaluation',
-          status: 'BLOCKED',
-          detail: `User ID [${testUserId}] not found in explicit allowed users whitelist [${allowedUsers}].`,
-        });
-        return {
-          allowed: false,
-          reason: `User Whitelist Evaluation Failure: User ID (${testUserId}) is not present in document allowed users whitelist.`,
-          steps,
-          failedStep: 4,
-        };
-      }
-    }
-
-    // Restricted Groups & Confidential Executive Evaluation
-    const userGrpList = testUserGroups.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    const docGrpList = allowedGroups.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-    const matchingGroups = userGrpList.filter(g => docGrpList.includes(g));
-
-    if (matchingGroups.length > 0) {
-      steps.push({
-        name: 'Step 4: Entitlements & Visibility Evaluation',
-        status: 'PASS',
-        detail: `Group membership intersection found: [${matchingGroups.join(', ')}].`,
-      });
-      return {
-        allowed: true,
-        reason: `Group Entitlement Intersection Matched: User group memberships [${testUserGroups}] intersect document allowed groups [${allowedGroups}] (Matched: ${matchingGroups.join(', ')}).`,
-        steps,
-      };
-    } else {
-      steps.push({
-        name: 'Step 4: Entitlements & Visibility Evaluation',
-        status: 'BLOCKED',
-        detail: `No group membership intersection between user groups [${testUserGroups}] and document required groups [${allowedGroups}].`,
-      });
-      return {
-        allowed: false,
-        reason: `Group Entitlement Disjoint Violation: User group memberships [${testUserGroups}] share no intersection with document required groups [${allowedGroups}].`,
-        steps,
-        failedStep: 4,
-      };
-    }
-  };
-
-  const evalResult = runACLCheck();
-
-  // Generated UnifiedACL JSON representation
-  const generatedSchema = {
-    schema_version: 'v2.4-unified',
-    tenant_id: docTenantId,
-    visibility_mode: visibility,
-    clearance_level: docClearance,
-    entitlements: {
-      allowed_groups: allowedGroups.split(',').map(s => s.trim()).filter(Boolean),
-      allowed_users: allowedUsers.split(',').map(s => s.trim()).filter(Boolean),
-      denied_users_override: deniedUsers.split(',').map(s => s.trim()).filter(Boolean),
+  const jsonPayload = JSON.stringify({
+    timestamp: new Date().toISOString(),
+    evaluator: 'EKRS-ZeroTrust-v2.4',
+    subject: {
+      id: selectedPersona.id,
+      name: selectedPersona.name,
+      assumed_role: selectedPersona.role,
+      clearance_level: clearanceLevel,
+      entitlement_groups: parsedGroups,
     },
-    invariants_enforced: [
-      'DenyPrecedenceRule',
-      'StrictTenantIsolation',
-      'ClearanceHierarchyCheck',
-    ],
+    resource: {
+      document_id: currentDocObj.id,
+      title: currentDocObj.title,
+      classification: currentDocObj.classification,
+      min_clearance_required: currentDocObj.minLevel,
+      required_groups: currentDocObj.allowed,
+    },
+    decision: {
+      status: isAccessGranted ? 'ACCESS_GRANTED' : 'ACCESS_DENIED',
+      http_code: isAccessGranted ? 200 : 403,
+      group_check_passed: hasGroupAccess,
+      level_check_passed: hasLevelAccess,
+    }
+  }, null, 2);
+
+  const handleCopyJSON = () => {
+    navigator.clipboard.writeText(jsonPayload);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const handleCopySchema = () => {
-    navigator.clipboard.writeText(JSON.stringify(generatedSchema, null, 2));
-    setCopiedSchema(true);
-    setTimeout(() => setCopiedSchema(false), 2000);
+  const handleRunEvaluation = () => {
+    const timestamp = new Date().toLocaleTimeString();
+    if (isAccessGranted) {
+      setEvalLog(`[${timestamp}] EVALUATION PASS: User ${selectedPersona.name} (Level ${clearanceLevel}) granted access to ${currentDocObj.id} (${currentDocObj.classification}). HTTP 200.`);
+    } else {
+      setEvalLog(`[${timestamp}] EVALUATION FAIL: User ${selectedPersona.name} (Level ${clearanceLevel}) DENIED access to ${currentDocObj.id}. Reason: ${!hasLevelAccess ? 'Insufficient Clearance Level' : 'Missing Required Group Entitlement'}. HTTP 403.`);
+    }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-5">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 light-card p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
+            <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 shadow-2xs">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
-                <span>UnifiedACL Security Evaluator & Sandbox</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-cyan-500/10 border border-cyan-500/30 text-cyan-300">
-                  Zero-Trust Core
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <span>Zero-Trust ACL Lab & Security Evaluator</span>
+                <span className="px-2.5 py-0.5 rounded-full badge-emerald text-xs font-mono font-bold">
+                  Live Engine
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
-                Interactively construct document entitlement schemas and evaluate request context against security invariants with real-time pass/blocked feedback.
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">
+                Simulate security clearance levels and group entitlements against classified enterprise documents.
               </p>
             </div>
           </div>
         </div>
 
-        {/* Quick Persona Toggles */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-slate-400">Quick Persona:</span>
-          <button
-            onClick={() => {
-              setTestUserId('user-101');
-              setTestUserGroups('engineering, devops');
-              setTestUserClearance('Secret');
-              setTestUserTenantId('tenant-acme-corp');
-            }}
-            className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-          >
-            Alex (Eng Lead)
-          </button>
-          <button
-            onClick={() => {
-              setTestUserId('jordan.vendor@external.com');
-              setTestUserGroups('contractor');
-              setTestUserClearance('Unclassified');
-              setTestUserTenantId('tenant-external-inc');
-            }}
-            className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors"
-          >
-            Jordan (Vendor)
-          </button>
-          <button
-            onClick={() => {
-              setTestUserId('user-999');
-              setTestUserGroups('engineering');
-              setTestUserClearance('Confidential');
-              setTestUserTenantId('tenant-acme-corp');
-            }}
-            className="px-2.5 py-1 text-xs font-mono rounded-lg bg-slate-800 hover:bg-slate-700 text-rose-300 border border-rose-900/50 transition-colors"
-          >
-            Blocked Insider
-          </button>
-        </div>
+        <button
+          onClick={handleRunEvaluation}
+          className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold rounded-lg flex items-center gap-2 shadow-sm transition-all active:scale-95 self-start md:self-auto"
+        >
+          <Play className="w-4 h-4 fill-white" />
+          <span>Run Live Evaluation Sandbox</span>
+        </button>
       </div>
 
-      {/* Preset Selector Banner */}
-      <div className="space-y-2">
-        <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Zap className="w-3.5 h-3.5 text-cyan-400" />
-          <span>ACL Schema Scenario Presets</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {PRESETS.map(preset => (
-            <button
-              key={preset.name}
-              onClick={() => applyPreset(preset)}
-              className={`p-3 text-left rounded-xl border transition-all text-xs ${
-                activePreset === preset.name
-                  ? 'bg-cyan-950/40 border-cyan-500/60 text-cyan-200 ring-1 ring-cyan-500/30'
-                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 text-slate-300'
-              }`}
-            >
-              <div className="font-semibold text-slate-100 mb-1">{preset.name}</div>
-              <div className="text-[11px] text-slate-400 leading-snug line-clamp-2">{preset.desc}</div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Main Grid: Schema Builder (Left) & Request Evaluator Sandbox (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Schema Configuration Form (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="glass-panel p-6 rounded-2xl border border-slate-700/80 space-y-5 shadow-xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="text-xs font-mono text-cyan-400 uppercase tracking-wider flex items-center gap-2 font-bold">
-                <Lock className="w-4 h-4" />
-                <span>1. UnifiedACL Document Schema Builder</span>
-              </div>
-              <span className="px-2 py-0.5 rounded text-[10px] font-mono bg-slate-800 text-slate-300 border border-slate-700">
-                Schema: {docTenantId}
-              </span>
+      {/* Dual-Pane Split Screen Layout Spec */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        {/* Left Column: Schema Builder & Context Simulator */}
+        <div className="light-card p-6 space-y-5 bg-white border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+            <div className="flex items-center space-x-2">
+              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+              <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
+                Left Column: Schema Builder & Context Simulator
+              </h3>
             </div>
+            <span className="text-[11px] font-mono text-indigo-600 font-semibold">Inputs & Attributes</span>
+          </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              {/* Visibility Mode Select */}
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-slate-300 font-medium flex items-center gap-1.5">
-                  <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Visibility Mode</span>
-                </label>
-                <select
-                  value={visibility}
-                  onChange={e => {
-                    setActivePreset(null);
-                    setVisibility(e.target.value as VisibilityMode);
-                  }}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500 transition-colors"
-                >
-                  <option value="restricted_groups">restricted_groups (Group-Based Entitlements)</option>
-                  <option value="explicit_users">explicit_users (Specific User Whitelist Only)</option>
-                  <option value="tenant_internal">tenant_internal (All Organization Employees)</option>
-                  <option value="confidential_executive">confidential_executive (Executive Board Only)</option>
-                  <option value="public">public (Unrestricted / Public Access)</option>
-                </select>
-              </div>
+          {/* User Persona Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider block">
+              1. Base Subject Persona
+            </label>
+            <select
+              value={selectedPersona.id}
+              onChange={(e) => {
+                const p = PRESET_PERSONAS.find(item => item.id === e.target.value);
+                if (p) {
+                  setSelectedPersona(p);
+                  setCustomGroups(p.groups.join(', '));
+                  setClearanceLevel(p.clearanceLevel || 2);
+                }
+              }}
+              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            >
+              {PRESET_PERSONAS.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.name} — {p.role} (Clearance Level {p.clearanceLevel || 2})
+                </option>
+              ))}
+            </select>
+          </div>
 
-              {/* Allowed Groups */}
-              <div className="space-y-1.5 sm:col-span-2">
-                <label className="block text-slate-300 font-medium flex items-center gap-1.5">
-                  <GroupIcon className="w-3.5 h-3.5 text-purple-400" />
-                  <span>Allowed Groups (comma separated)</span>
-                </label>
-                <input
-                  type="text"
-                  value={allowedGroups}
-                  onChange={e => {
-                    setActivePreset(null);
-                    setAllowedGroups(e.target.value);
-                  }}
-                  placeholder="e.g. engineering, devops, security"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
+          {/* Target Document Selector */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider block">
+              2. Target Resource Document
+            </label>
+            <select
+              value={targetDoc}
+              onChange={(e) => setTargetDoc(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            >
+              {DOCUMENTS.map(d => (
+                <option key={d.id} value={d.id}>
+                  [{d.id}] {d.title} ({d.classification} • Min L{d.minLevel})
+                </option>
+              ))}
+            </select>
+          </div>
 
-              {/* Allowed Users Whitelist */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-300 font-medium flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Allowed Users Whitelist</span>
-                </label>
-                <input
-                  type="text"
-                  value={allowedUsers}
-                  onChange={e => {
-                    setActivePreset(null);
-                    setAllowedUsers(e.target.value);
-                  }}
-                  placeholder="e.g. user-101, alex@acme.com"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-emerald-500 transition-colors"
-                />
-              </div>
-
-              {/* Explicit Denied Users (Precedence Override) */}
-              <div className="space-y-1.5">
-                <label className="block text-rose-300 font-medium flex items-center gap-1.5">
-                  <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Explicit Denied Users (Override)</span>
-                </label>
-                <input
-                  type="text"
-                  value={deniedUsers}
-                  onChange={e => {
-                    setActivePreset(null);
-                    setDeniedUsers(e.target.value);
-                  }}
-                  placeholder="e.g. user-999, terminated_user"
-                  className="w-full bg-slate-950 border border-rose-900/60 rounded-xl px-3 py-2 text-rose-200 font-mono text-xs focus:outline-none focus:border-rose-500 transition-colors placeholder:text-rose-950"
-                />
-              </div>
-
-              {/* Security Clearance Requirement */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-300 font-medium flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-amber-400" />
-                  <span>Document Clearance Requirement</span>
-                </label>
-                <select
-                  value={docClearance}
-                  onChange={e => setDocClearance(e.target.value as SecurityClearance)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-amber-500 transition-colors"
-                >
-                  <option value="Unclassified">Unclassified (Public / Low)</option>
-                  <option value="Confidential">Confidential (Internal)</option>
-                  <option value="Restricted">Restricted (Sensitive)</option>
-                  <option value="Secret">Secret (High Risk)</option>
-                  <option value="Top Secret">Top Secret (Critical)</option>
-                </select>
-              </div>
-
-              {/* Tenant Identifier */}
-              <div className="space-y-1.5">
-                <label className="block text-slate-300 font-medium flex items-center gap-1.5">
-                  <Layers className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Owner Tenant ID</span>
-                </label>
-                <input
-                  type="text"
-                  value={docTenantId}
-                  onChange={e => setDocTenantId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-cyan-500 transition-colors"
-                />
-              </div>
+          {/* Clearance Level Slider */}
+          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="font-bold text-slate-700">3. Evaluated Clearance Level: Level {clearanceLevel}</span>
+              <span className="font-bold text-indigo-700">Req: Level {currentDocObj.minLevel}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              step="1"
+              value={clearanceLevel}
+              onChange={e => setClearanceLevel(parseInt(e.target.value))}
+              className="w-full accent-indigo-600 cursor-pointer"
+            />
+            <div className="flex items-center justify-between text-[9px] font-mono text-slate-400">
+              <span>L1 Public</span>
+              <span>L2 Internal</span>
+              <span>L3 Lead</span>
+              <span>L4 Staff</span>
+              <span>L5 Exec</span>
             </div>
           </div>
 
-          {/* Generated Schema JSON View */}
-          <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center gap-2">
-                <FileCode className="w-4 h-4 text-cyan-400" />
-                <span>Generated Schema Payload (JSON)</span>
+          {/* Group Entitlements Input */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-mono font-bold text-slate-700 uppercase tracking-wider block">
+              4. Entitlement Group Claims (Comma Separated)
+            </label>
+            <input
+              type="text"
+              value={customGroups}
+              onChange={e => setCustomGroups(e.target.value)}
+              placeholder="e.g. engineering, devops, legal-team"
+              className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
+            />
+            <div className="text-[10px] font-mono text-slate-500">
+              Required for target doc: <strong className="text-indigo-700">{currentDocObj.allowed.join(', ') || 'None (Public)'}</strong>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Live Decision Engine & JSON Generator */}
+        <div className="light-card p-6 space-y-5 bg-white border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-200 pb-3">
+              <div className="flex items-center space-x-2">
+                <Terminal className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wider font-mono">
+                  Right Column: Live Decision Engine & JSON
+                </h3>
               </div>
               <button
-                onClick={handleCopySchema}
-                className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-mono rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors"
+                onClick={handleCopyJSON}
+                className="inline-flex items-center space-x-1 px-2.5 py-1 rounded bg-slate-100 hover:bg-slate-200 border border-slate-300 text-xs font-mono text-slate-700 transition-colors"
               >
-                {copiedSchema ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                <span>{copiedSchema ? 'Copied!' : 'Copy Schema'}</span>
+                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{isCopied ? 'Copied' : 'Copy JSON'}</span>
               </button>
             </div>
-            <pre className="p-4 rounded-xl bg-slate-950 text-[11px] font-mono text-cyan-300 overflow-x-auto border border-slate-900 leading-relaxed">
-              {JSON.stringify(generatedSchema, null, 2)}
-            </pre>
-          </div>
-        </div>
 
-        {/* Right Column: Request Entitlement Evaluator & Evaluation Trace (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Entitlement Request Simulator Card */}
-          <div className="glass-panel p-6 rounded-2xl border border-slate-700/80 space-y-4 shadow-xl">
-            <div className="text-xs font-mono text-purple-400 uppercase tracking-wider flex items-center gap-2 font-bold border-b border-slate-800 pb-3">
-              <Play className="w-4 h-4" />
-              <span>2. Requesting User Context Simulator</span>
-            </div>
-
-            <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-400 font-mono mb-1">Requesting User ID (user_guid)</label>
-                <input
-                  type="text"
-                  value={testUserId}
-                  onChange={e => setTestUserId(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-
-              <div>
-                <label className="block text-slate-400 font-mono mb-1">User Group Memberships</label>
-                <input
-                  type="text"
-                  value={testUserGroups}
-                  onChange={e => setTestUserGroups(e.target.value)}
-                  placeholder="e.g. engineering, devops"
-                  className="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 font-mono mb-1">User Clearance</label>
-                  <select
-                    value={testUserClearance}
-                    onChange={e => setTestUserClearance(e.target.value as SecurityClearance)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors"
-                  >
-                    <option value="Unclassified">Unclassified</option>
-                    <option value="Confidential">Confidential</option>
-                    <option value="Restricted">Restricted</option>
-                    <option value="Secret">Secret</option>
-                    <option value="Top Secret">Top Secret</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-slate-400 font-mono mb-1">User Tenant ID</label>
-                  <input
-                    type="text"
-                    value={testUserTenantId}
-                    onChange={e => setTestUserTenantId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-200 font-mono text-xs focus:outline-none focus:border-purple-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              {/* Context Security Toggles */}
-              <div className="pt-2 flex items-center justify-between border-t border-slate-800 text-[11px]">
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={mfaVerified}
-                    onChange={e => setMfaVerified(e.target.checked)}
-                    className="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0"
-                  />
-                  <span>MFA Verified Session</span>
-                </label>
-                <label className="flex items-center gap-2 text-slate-300 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={corporateVpn}
-                    onChange={e => setCorporateVpn(e.target.checked)}
-                    className="rounded bg-slate-900 border-slate-700 text-cyan-500 focus:ring-0"
-                  />
-                  <span>Corporate VPN Origin</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Instant Evaluation Feedback Result Banner */}
-          <div className="space-y-4">
-            <div className={`p-5 rounded-2xl border transition-all space-y-3 ${
-              evalResult.allowed
-                ? 'bg-emerald-950/40 border-emerald-500/50 shadow-lg shadow-emerald-950/30'
-                : 'bg-rose-950/40 border-rose-500/50 shadow-lg shadow-rose-950/30'
+            {/* Decision Status Banner */}
+            <div className={`p-4 rounded-xl border flex items-center justify-between shadow-2xs ${
+              isAccessGranted
+                ? 'badge-emerald font-bold'
+                : 'badge-rose font-bold'
             }`}>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-2.5 font-mono font-bold text-sm">
-                  {evalResult.allowed ? (
-                    <>
-                      <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400 animate-pulse">
-                        <CheckCircle2 className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-emerald-400 text-base">ACCESS GRANTED (PASS)</div>
-                        <div className="text-[10px] font-sans text-emerald-300 font-normal">Zero-Trust Evaluator Decision</div>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="p-2 rounded-xl bg-rose-500/20 text-rose-400 animate-pulse">
-                        <XCircle className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <div className="text-rose-400 text-base">ACCESS DENIED (BLOCKED)</div>
-                        <div className="text-[10px] font-sans text-rose-300 font-normal">Zero-Trust Evaluator Decision</div>
-                      </div>
-                    </>
-                  )}
+              <div className="flex items-center space-x-2.5">
+                {isAccessGranted ? (
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                ) : (
+                  <XCircle className="w-5 h-5 text-rose-600" />
+                )}
+                <div>
+                  <div className="text-sm font-mono font-extrabold">
+                    {isAccessGranted ? 'ACCESS GRANTED (PASS) - HTTP 200' : 'ACCESS DENIED (FAIL) - HTTP 403'}
+                  </div>
+                  <div className="text-[11px] font-mono mt-0.5 opacity-90">
+                    {isAccessGranted
+                      ? `User satisfied Level ${currentDocObj.minLevel}+ requirement and group checks.`
+                      : !hasLevelAccess
+                        ? `Blocked by Level Gate: User Level ${clearanceLevel} < Required Level ${currentDocObj.minLevel}`
+                        : `Blocked by Group Gate: Missing entitlement (${currentDocObj.allowed.join(', ')})`}
+                  </div>
                 </div>
-                <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-semibold ${
-                  evalResult.allowed
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                }`}>
-                  {evalResult.allowed ? 'HTTP 200' : 'HTTP 403'}
-                </span>
               </div>
+            </div>
 
-              <p className={`text-xs leading-relaxed font-mono p-3 rounded-xl ${
-                evalResult.allowed ? 'bg-emerald-950/60 text-emerald-200 border border-emerald-900/50' : 'bg-rose-950/60 text-rose-200 border border-rose-900/50'
-              }`}>
-                {evalResult.reason}
+            {/* Live Terminal Log */}
+            <div className="p-3 rounded-lg bg-slate-900 text-slate-100 font-mono text-xs space-y-1 border border-slate-800 shadow-inner">
+              <div className="text-[10px] text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Zap className="w-3 h-3 text-indigo-400" />
+                <span>Live Audit Evaluation Trace</span>
+              </div>
+              <p className="text-emerald-400 font-mono text-[11px] leading-relaxed pt-1">
+                {evalLog}
               </p>
             </div>
 
-            {/* Evaluation Trace Steps Breakdown */}
-            <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-3">
-              <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between">
-                <span>Evaluation Pipeline Trace</span>
-                <span className="text-[10px] text-cyan-400 font-semibold">{evalResult.steps.length} Checks Run</span>
+            {/* JSON Payload Display */}
+            <div className="space-y-1.5">
+              <div className="text-[10px] font-mono text-slate-500 uppercase tracking-wider font-bold">
+                Exportable Evaluator Decision Payload
               </div>
-
-              <div className="space-y-2">
-                {evalResult.steps.map((step, idx) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-xl border text-xs space-y-1 transition-all ${
-                      step.status === 'PASS'
-                        ? 'bg-slate-950/70 border-emerald-900/40 text-slate-300'
-                        : 'bg-rose-950/40 border-rose-900/80 text-rose-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between font-mono font-semibold">
-                      <span className="flex items-center gap-1.5">
-                        {step.status === 'PASS' ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                        ) : (
-                          <XCircle className="w-3.5 h-3.5 text-rose-400" />
-                        )}
-                        <span>{step.name}</span>
-                      </span>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        step.status === 'PASS' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
-                      }`}>
-                        {step.status}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-slate-400 font-sans pl-5 leading-snug">
-                      {step.detail}
-                    </p>
-                  </div>
-                ))}
-              </div>
+              <pre className="p-4 rounded-xl bg-slate-900 text-slate-100 font-mono text-xs overflow-x-auto leading-relaxed shadow-inner border border-slate-800 max-h-64">
+                <code>{jsonPayload}</code>
+              </pre>
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

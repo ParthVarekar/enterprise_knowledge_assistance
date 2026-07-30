@@ -155,20 +155,20 @@ export const AegisQAView: React.FC = () => {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 light-card p-6 shadow-sm">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400">
+            <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 shadow-2xs">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
                 <span>Aegis-QA Autonomous Quality Platform</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-blue-500/10 border border-blue-500/30 text-blue-300">
+                <span className="px-2.5 py-0.5 rounded-full badge-indigo text-xs font-mono font-bold">
                   Continuous Verification
                 </span>
               </h1>
-              <p className="text-xs text-slate-400 mt-0.5">
+              <p className="text-xs text-slate-500 mt-0.5 font-medium">
                 Continuous property invariant verification, automated AST mutation score tracking, and adversarial payload fuzzing suite.
               </p>
             </div>
@@ -177,16 +177,16 @@ export const AegisQAView: React.FC = () => {
 
         <div className="flex items-center gap-3">
           <div className="text-right hidden sm:block">
-            <div className="text-[11px] font-mono text-slate-400">Last Execution</div>
-            <div className="text-xs font-mono text-slate-200 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-blue-400" />
+            <div className="text-[11px] font-mono text-slate-500">Last Execution</div>
+            <div className="text-xs font-mono text-slate-800 flex items-center gap-1 font-bold">
+              <Clock className="w-3 h-3 text-indigo-600" />
               <span>{lastRunTime}</span>
             </div>
           </div>
           <button
             onClick={handleRunSuite}
             disabled={isRunning}
-            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold rounded-xl flex items-center gap-2.5 shadow-lg shadow-blue-950/40 disabled:opacity-50 transition-all hover:scale-[1.02]"
+            className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-xs font-bold rounded-lg flex items-center gap-2.5 shadow-sm disabled:opacity-50 transition-all active:scale-95"
           >
             {isRunning ? (
               <RotateCw className="w-4 h-4 animate-spin text-white" />
@@ -198,106 +198,108 @@ export const AegisQAView: React.FC = () => {
         </div>
       </div>
 
-      {/* Execution Progress Bar when running */}
+      {/* Progress Bar when Running */}
       {isRunning && (
-        <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/40 space-y-2 animate-pulse">
+        <div className="p-4 rounded-xl bg-indigo-50 border border-indigo-200 space-y-2 animate-pulse shadow-xs">
           <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-blue-300 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-blue-400 animate-spin" />
+            <span className="text-indigo-900 flex items-center gap-2 font-bold">
+              <Activity className="w-4 h-4 text-indigo-600 animate-spin" />
               <span>{currentStep}</span>
             </span>
-            <span className="text-blue-400 font-bold">{progress}%</span>
+            <span className="text-indigo-700 font-bold">{progress}%</span>
           </div>
-          <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
             <div
-              className="bg-blue-500 h-full transition-all duration-300"
+              className="bg-indigo-600 h-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
         </div>
       )}
 
-      {/* Top Metric Cards */}
+      {/* Telemetry Dashboard: Metric Counters & Counters Spec */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Test Suite Pass Rate */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2 relative overflow-hidden">
+        {/* Suite Pass Rate */}
+        <div className="light-card p-5 space-y-2 relative overflow-hidden bg-white border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Suite Pass Rate</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono text-slate-500 uppercase tracking-wider font-semibold">Suite Pass Rate</span>
+            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-slate-100">20 / 20</span>
-            <span className="text-xs font-mono text-emerald-400 font-semibold">100% Passed</span>
+            <span className="text-3xl font-extrabold font-mono text-slate-900">20 / 20</span>
+            <span className="text-xs font-mono text-emerald-700 font-bold">100% Passed</span>
           </div>
-          <p className="text-[11px] text-slate-400 leading-tight">
+          <p className="text-[11px] text-slate-500 font-medium leading-tight">
             All invariant assertions, mutants, and payload fuzzers green.
           </p>
         </div>
 
         {/* Mutation Kill Rate Stat Card */}
-        <div className="glass-panel p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 space-y-2 relative overflow-hidden">
+        <div className="light-card p-5 space-y-2 relative overflow-hidden bg-white border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-bold">Mutation Kill Rate</span>
-            <Bug className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono text-emerald-700 uppercase tracking-wider font-extrabold">Mutation Kill Rate</span>
+            <Bug className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-emerald-300">100%</span>
-            <span className="text-xs font-mono text-emerald-400 font-bold">3 / 3 Mutants Killed</span>
+            <span className="text-3xl font-extrabold font-mono text-emerald-700">100%</span>
+            <span className="text-xs font-mono text-emerald-700 font-bold">3 / 3 Mutants Killed</span>
           </div>
-          <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
-            <div className="bg-emerald-400 h-full w-full" />
+          <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+            <div className="bg-emerald-500 h-full w-full" />
           </div>
-          <p className="text-[11px] text-emerald-300/80 leading-tight">
+          <p className="text-[11px] text-slate-500 font-medium leading-tight">
             AST logic mutations neutralized with zero false negatives.
           </p>
         </div>
 
         {/* Property Iterations */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
+        <div className="light-card p-5 space-y-2 bg-white border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Property Iterations</span>
-            <Zap className="w-4 h-4 text-blue-400" />
+            <span className="text-xs font-mono text-slate-500 uppercase tracking-wider font-semibold">Property Iterations</span>
+            <Zap className="w-4 h-4 text-indigo-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-blue-300">400</span>
-            <span className="text-xs font-mono text-slate-400">Randomized Trials</span>
+            <span className="text-3xl font-extrabold font-mono text-slate-900">400</span>
+            <span className="text-xs font-mono text-slate-500 font-medium">Randomized Trials</span>
           </div>
-          <p className="text-[11px] text-slate-400 leading-tight">
+          <p className="text-[11px] text-slate-500 font-medium leading-tight">
             0 Property Invariant Leaks detected across state space.
           </p>
         </div>
 
         {/* Fuzzing Resilience */}
-        <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
+        <div className="light-card p-5 space-y-2 bg-white border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Fuzzing Resilience</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-mono text-slate-500 uppercase tracking-wider font-semibold">Fuzzing Resilience</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-600" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-emerald-400">100%</span>
-            <span className="text-xs font-mono text-slate-400">500 Payload Inputs</span>
+            <span className="text-3xl font-extrabold font-mono text-emerald-700">100%</span>
+            <span className="text-xs font-mono text-slate-500 font-medium">500 Payload Inputs</span>
           </div>
-          <p className="text-[11px] text-slate-400 leading-tight">
+          <p className="text-[11px] text-slate-500 font-medium leading-tight">
             Handled oversized arrays, SQLi & script injection safely.
           </p>
         </div>
       </div>
 
-      {/* Filter Tabs & Test Stream */}
+      {/* Segmented Tab Control & Interactive Test List */}
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-800 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-3">
           <div className="flex items-center space-x-2">
             <Filter className="w-4 h-4 text-slate-400" />
-            <span className="text-xs font-mono text-slate-300 font-semibold">Filter Suite:</span>
-            <div className="flex items-center gap-1.5">
+            <span className="text-xs font-mono text-slate-700 font-bold">Filter Suite:</span>
+            
+            {/* Segmented Tab Control */}
+            <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-lg border border-slate-200">
               {(['All', 'Property', 'Mutation', 'Fuzzing'] as const).map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
+                  className={`px-3 py-1 text-xs font-mono rounded-md transition-all ${
                     activeTab === tab
-                      ? 'bg-blue-600 text-white font-bold'
-                      : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                      ? 'bg-white text-indigo-700 font-bold shadow-2xs border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
                   }`}
                 >
                   {tab === 'All' && `All Results (${SUITE_DATA.length})`}
@@ -309,75 +311,75 @@ export const AegisQAView: React.FC = () => {
             </div>
           </div>
 
-          <div className="text-xs font-mono text-slate-400">
-            Showing <strong className="text-slate-200">{filteredData.length}</strong> items
+          <div className="text-xs font-mono text-slate-500">
+            Showing <strong className="text-slate-900">{filteredData.length}</strong> items
           </div>
         </div>
 
-        {/* Mutation Kill Banner when Mutation tab or All is active */}
+        {/* Mutation Kill Banner */}
         {(activeTab === 'All' || activeTab === 'Mutation') && (
-          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-xl badge-emerald flex items-center justify-between gap-4 shadow-2xs">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
+              <div className="p-2 rounded-lg bg-emerald-100 border border-emerald-300 text-emerald-700">
                 <Bug className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-emerald-200 font-mono">AST Mutation Score: 100% (3 / 3 Mutants Killed)</h3>
-                <p className="text-xs text-emerald-300/80">
-                  Synthesized AST mutants (inverted deny check, removed group check, bypassed tenant check) were all caught and neutralized by the test suite.
+                <h3 className="font-bold text-sm text-emerald-900 font-mono">AST Mutation Score: 100% (3 / 3 Mutants Killed)</h3>
+                <p className="text-xs text-emerald-800 font-medium">
+                  Synthesized AST mutants (inverted deny check, removed group check, bypassed tenant check) were all caught and neutralized.
                 </p>
               </div>
             </div>
-            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30 whitespace-nowrap">
+            <span className="px-3 py-1 rounded-full bg-emerald-200 text-emerald-900 font-mono text-xs font-extrabold border border-emerald-300 whitespace-nowrap">
               3/3 KILLED
             </span>
           </div>
         )}
 
-        {/* Results Cards List */}
+        {/* Results Cards List with Execution Rows */}
         <div className="space-y-3">
           {filteredData.map(item => (
             <div
               key={item.id}
-              className={`p-5 rounded-2xl border transition-all space-y-3 ${
+              className={`p-5 rounded-xl border transition-all space-y-3 bg-white shadow-2xs ${
                 item.category === 'Mutation'
-                  ? 'bg-slate-900/80 border-emerald-500/40 hover:border-emerald-500/60'
-                  : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                  ? 'border-emerald-200 hover:border-emerald-300'
+                  : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-3">
                   {item.status === 'KILLED' ? (
-                    <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300">
+                    <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
                       <Bug className="w-5 h-5" />
                     </div>
                   ) : (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
                   )}
                   <div>
                     <div className="flex items-center gap-2">
-                      <h4 className="font-bold text-slate-100 text-sm">{item.name}</h4>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
+                      <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold ${
                         item.category === 'Property'
-                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
+                          ? 'badge-indigo'
                           : item.category === 'Mutation'
-                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
-                          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                          ? 'badge-emerald'
+                          : 'badge-amber'
                       }`}>
                         {item.category} Invariant
                       </span>
                     </div>
-                    <p className="text-xs text-slate-400 mt-0.5">{item.details}</p>
+                    <p className="text-xs text-slate-500 mt-0.5 font-medium">{item.details}</p>
                   </div>
                 </div>
 
                 <div className="flex items-center space-x-3 self-end sm:self-center">
-                  <span className="text-[11px] font-mono text-slate-400">{item.iterations}</span>
-                  <span className="text-[11px] font-mono text-slate-500">| {item.executionMs}ms</span>
-                  <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${
+                  <span className="text-[11px] font-mono text-slate-500">{item.iterations}</span>
+                  <span className="text-[11px] font-mono text-slate-400">| {item.executionMs}ms</span>
+                  <span className={`px-2.5 py-1 rounded-md text-xs font-mono font-bold ${
                     item.status === 'KILLED'
-                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                      : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                      ? 'badge-emerald'
+                      : 'badge-emerald'
                   }`}>
                     {item.status === 'KILLED' ? 'MUTANT KILLED' : 'PASSED'}
                   </span>
@@ -386,18 +388,18 @@ export const AegisQAView: React.FC = () => {
 
               {/* Code Diff Display for Mutation Cards */}
               {item.mutantDiff && (
-                <div className="pt-2 border-t border-slate-800 text-xs font-mono space-y-1">
-                  <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <FileCode className="w-3.5 h-3.5 text-blue-400" />
+                <div className="pt-2 border-t border-slate-100 text-xs font-mono space-y-1">
+                  <div className="text-[11px] text-slate-500 flex items-center gap-1.5 font-bold">
+                    <FileCode className="w-3.5 h-3.5 text-indigo-600" />
                     <span>Injected AST Mutation vs Guard Assertions:</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-900 space-y-1">
-                    <div className="text-emerald-400/90 leading-relaxed">
-                      <span className="select-none text-slate-600 mr-2">-</span>
+                  <div className="p-3 rounded-lg bg-slate-900 text-slate-100 space-y-1 shadow-inner border border-slate-800">
+                    <div className="text-emerald-400 leading-relaxed font-mono">
+                      <span className="select-none text-slate-500 mr-2">-</span>
                       {item.mutantDiff.original}
                     </div>
-                    <div className="text-rose-400/90 leading-relaxed font-semibold">
-                      <span className="select-none text-rose-600 mr-2">+</span>
+                    <div className="text-rose-400 leading-relaxed font-mono font-bold">
+                      <span className="select-none text-rose-500 mr-2">+</span>
                       {item.mutantDiff.mutated}
                     </div>
                   </div>

@@ -11,11 +11,11 @@ import {
   Building2,
   Server,
   UserCheck,
-  Sliders,
-  Sparkles,
+  SlidersHorizontal,
   RotateCcw,
   CheckSquare,
-  Square
+  Square,
+  Sparkles
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
 
     if (lower.includes('restricted') || lower.includes('level 5') || lower.includes('level 4')) {
       badges.push(
-        <span key="restricted" className="inline-flex items-center gap-1 font-mono font-bold rounded-full px-2 py-0.5 text-[10px] bg-[#421d24] text-rose-200 border border-rose-400/30">
+        <span key="restricted" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] badge-rose">
           <ShieldAlert className="w-2.5 h-2.5" />
           Restricted
         </span>
@@ -115,7 +115,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('confidential') || lower.includes('level 3')) {
       badges.push(
-        <span key="confidential" className="inline-flex items-center gap-1 font-mono font-bold rounded-full px-2 py-0.5 text-[10px] bg-amber-950 text-amber-200 border border-amber-400/30">
+        <span key="confidential" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] badge-amber">
           <Lock className="w-2.5 h-2.5" />
           Confidential
         </span>
@@ -123,7 +123,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('internal') || lower.includes('level 2')) {
       badges.push(
-        <span key="internal" className="inline-flex items-center gap-1 font-mono font-bold rounded-full px-2 py-0.5 text-[10px] bg-[#2A2859] text-white border border-white/20">
+        <span key="internal" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] badge-indigo">
           <Building2 className="w-2.5 h-2.5" />
           Internal
         </span>
@@ -131,7 +131,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('public') || lower.includes('level 1')) {
       badges.push(
-        <span key="public" className="inline-flex items-center gap-1 font-mono font-bold rounded-full px-2 py-0.5 text-[10px] bg-emerald-950 text-emerald-200 border border-emerald-400/30">
+        <span key="public" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] badge-emerald">
           <Globe className="w-2.5 h-2.5" />
           Public
         </span>
@@ -142,64 +142,66 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
   };
 
   return (
-    <header className="h-16 bg-[#1b1938]/90 border-b border-white/10 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 backdrop-blur-xl">
-      {/* Susurrus Status Indicators Bar */}
+    <header className="h-16 bg-white/80 border-b border-slate-200/80 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40 backdrop-blur-md">
+      {/* Utility Bar Left Items */}
       <div className="flex items-center space-x-3 overflow-x-auto py-1">
-        {/* Zero-Trust ACL Gate Status */}
-        <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span className="font-bold text-xs">ACL Level Gate: Active (L{currentPersona.clearanceLevel || 2})</span>
+        {/* 1. ACL Gate Indicator */}
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full badge-emerald text-xs font-mono font-semibold shadow-xs">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+          <span>ACL Level Gate: L{currentPersona.clearanceLevel || 2} Active</span>
         </div>
 
-        {/* Local Llama CUDA Status */}
-        <div className="flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-[#cbb7fb] animate-pulse" />
-          <Cpu className="w-3.5 h-3.5 text-[#cbb7fb]" />
-          <span className="font-bold text-xs">Llama.cpp CUDA: Port 8085</span>
+        {/* 2. Inference Backend Badge */}
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full badge-indigo text-xs font-mono font-semibold shadow-xs">
+          <Cpu className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Llama.cpp CUDA: Port 8085</span>
         </div>
 
-        <div className="hidden xl:flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-mono text-slate-300">
+        {/* 3. Tenant Switcher */}
+        <div className="hidden xl:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-mono text-slate-600 shadow-xs">
           <Server className="w-3.5 h-3.5 text-slate-400" />
-          <span>Tenant: <strong className="text-white">acme-corp</strong></span>
+          <span>Tenant: <strong className="text-slate-900">acme-corp</strong></span>
         </div>
       </div>
 
-      {/* Persona Switcher & Fluid Role Customizer Button */}
-      <div className="flex items-center space-x-2" ref={dropdownRef}>
+      {/* Utility Bar Right Items: Fluid Role Editor & Persona Switcher */}
+      <div className="flex items-center space-x-2.5" ref={dropdownRef}>
+        {/* Quick Tools: Fluid Role Editor Button */}
         <button
           onClick={() => setIsFluidModalOpen(true)}
-          className="flex items-center space-x-1.5 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-[#cbb7fb] text-xs font-mono font-bold transition-all shadow-md active:scale-95"
+          className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-slate-700 text-xs font-mono font-semibold transition-all shadow-xs active:scale-95"
           title="Customize Active Role & Clearance Level"
         >
-          <Sliders className="w-3.5 h-3.5" />
+          <SlidersHorizontal className="w-3.5 h-3.5 text-indigo-600" />
           <span className="hidden md:inline">Fluid Role Editor</span>
         </button>
 
+        {/* Persona & Clearance Switcher Pill */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-2.5 px-4 py-2 rounded-full bg-[#2A2859] hover:bg-[#1E1B42] border border-white/20 text-white transition-all text-left font-bold text-xs shadow-lg"
+          className="flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-900 transition-all text-left font-medium text-xs shadow-xs"
         >
           <span className="text-base">{currentPersona.avatar}</span>
           <div className="hidden sm:block">
-            <div className="font-extrabold text-xs text-white flex items-center gap-1.5">
+            <div className="font-bold text-xs text-slate-900 flex items-center gap-1">
               <span>{currentPersona.name}</span>
-              <ChevronDown className={`w-3.5 h-3.5 text-[#cbb7fb] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
-            <div className="text-[10px] text-[#cbb7fb] font-mono">
+            <div className="text-[10px] text-indigo-600 font-mono font-semibold">
               L{currentPersona.clearanceLevel || 2} • {currentPersona.role}
             </div>
           </div>
         </button>
 
-        {/* Dropdown Menu */}
+        {/* Persona Switcher Dropdown */}
         {isOpen && (
-          <div className="absolute right-4 top-14 w-80 sm:w-96 bg-[#121028] border border-white/20 rounded-[20px] shadow-2xl overflow-hidden z-50 backdrop-blur-2xl">
-            <div className="p-3.5 bg-[#1b1938] border-b border-white/10 flex items-center justify-between">
+          <div className="absolute right-4 top-14 w-80 sm:w-96 bg-white border border-slate-200 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+            <div className="p-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <UserCheck className="w-4 h-4 text-[#cbb7fb]" />
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono">
-                  Select Preset Persona
+                <UserCheck className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
+                  Select User Persona
                 </h3>
               </div>
 
@@ -208,9 +210,9 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                   setIsOpen(false);
                   setIsFluidModalOpen(true);
                 }}
-                className="text-[10px] font-mono text-[#cbb7fb] hover:underline flex items-center gap-1"
+                className="text-[10px] font-mono text-indigo-600 hover:underline flex items-center gap-1 font-semibold"
               >
-                <Sliders className="w-3 h-3" />
+                <SlidersHorizontal className="w-3 h-3" />
                 <span>Customize Role</span>
               </button>
             </div>
@@ -225,25 +227,25 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                       onSelectPersona(persona);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left p-3 rounded-[14px] transition-all border ${
+                    className={`w-full text-left p-3 rounded-lg transition-all border ${
                       isSelected
-                        ? 'bg-[#2A2859] border-white/40 text-white font-bold shadow-md'
-                        : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-200'
+                        ? 'bg-indigo-50/90 border-indigo-200 text-indigo-900 font-semibold shadow-xs'
+                        : 'bg-white hover:bg-slate-50 border-slate-200 text-slate-800'
                     }`}
                   >
                     <div className="flex items-start space-x-3">
                       <span className="text-xl">{persona.avatar}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-xs font-bold ${isSelected ? 'text-[#cbb7fb]' : 'text-white'}`}>
+                          <span className={`text-xs font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-900'}`}>
                             {persona.name}
                           </span>
-                          {isSelected && <Check className="w-4 h-4 text-[#cbb7fb]" />}
+                          {isSelected && <Check className="w-4 h-4 text-indigo-600" />}
                         </div>
-                        <div className="text-[11px] text-slate-300 font-medium">
+                        <div className="text-[11px] text-slate-500 font-medium">
                           {persona.role}
                         </div>
-                        <div className="mt-2 pt-1.5 border-t border-white/10">
+                        <div className="mt-2 pt-1.5 border-t border-slate-100">
                           {renderClearanceBadges(persona.securityClearance)}
                         </div>
                       </div>
@@ -258,22 +260,22 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
 
       {/* Fluid Role & Clearance Level Editor Modal */}
       {isFluidModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0b0f19]/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121028] border border-white/20 rounded-[24px] max-w-lg w-full overflow-hidden shadow-2xl space-y-0">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl space-y-0">
             {/* Modal Header */}
-            <div className="p-5 bg-[#1b1938] border-b border-white/10 flex items-center justify-between">
+            <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
-                <div className="w-8 h-8 rounded-full bg-[#2A2859] border border-white/20 flex items-center justify-center text-[#cbb7fb]">
-                  <Sliders className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg bg-indigo-100 border border-indigo-200 flex items-center justify-center text-indigo-700">
+                  <SlidersHorizontal className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-extrabold text-white text-sm">Fluid Role & Clearance Adjuster</h3>
-                  <p className="text-[10px] text-slate-300 font-mono">Dynamically adapt security clearance & entitlements</p>
+                  <h3 className="font-bold text-slate-900 text-sm">Fluid Role & Clearance Adjuster</h3>
+                  <p className="text-[10px] text-slate-500 font-mono">Dynamically adapt security clearance & entitlements</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsFluidModalOpen(false)}
-                className="text-slate-400 hover:text-white text-xs font-mono px-2 py-1 rounded bg-white/10"
+                className="text-slate-500 hover:text-slate-800 text-xs font-mono px-2.5 py-1 rounded bg-slate-200/80"
               >
                 Close
               </button>
@@ -283,7 +285,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
             <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
               {/* Role Title Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-mono font-bold text-[#cbb7fb] uppercase tracking-wider block">
+                <label className="text-xs font-mono font-bold text-indigo-700 uppercase tracking-wider block">
                   Assumed Corporate Role Title
                 </label>
                 <input
@@ -291,17 +293,17 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                   value={fluidRoleName}
                   onChange={e => setFluidRoleName(e.target.value)}
                   placeholder="e.g. Lead Security Architect / Principal Counsel"
-                  className="w-full bg-[#1b1938] border border-white/20 rounded-[12px] px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-[#cbb7fb] font-sans font-semibold"
+                  className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3.5 py-2 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium"
                 />
               </div>
 
               {/* Clearance Level Slider */}
-              <div className="p-4 rounded-[16px] bg-[#1b1938] border border-white/15 space-y-3">
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-mono font-bold text-white uppercase tracking-wider">
+                  <span className="text-xs font-mono font-bold text-slate-900 uppercase tracking-wider">
                     Corporate Clearance Level: Level {fluidLevel}
                   </span>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#2A2859] text-white border border-white/20">
+                  <span className="px-2.5 py-0.5 rounded text-[10px] font-mono font-bold badge-indigo">
                     {fluidLevel === 1 && 'Level 1: Public'}
                     {fluidLevel === 2 && 'Level 2: Internal IC'}
                     {fluidLevel === 3 && 'Level 3: Team Lead'}
@@ -317,10 +319,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                   step="1"
                   value={fluidLevel}
                   onChange={e => setFluidLevel(parseInt(e.target.value))}
-                  className="w-full accent-[#cbb7fb] cursor-pointer"
+                  className="w-full accent-indigo-600 cursor-pointer"
                 />
 
-                <div className="flex items-center justify-between text-[9px] font-mono text-slate-400 pt-1">
+                <div className="flex items-center justify-between text-[9px] font-mono text-slate-500 pt-1">
                   <span>L1 Public</span>
                   <span>L2 Internal</span>
                   <span>L3 Lead</span>
@@ -331,7 +333,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
 
               {/* Group Entitlement Toggles */}
               <div className="space-y-2">
-                <label className="text-xs font-mono font-bold text-[#cbb7fb] uppercase tracking-wider block">
+                <label className="text-xs font-mono font-bold text-indigo-700 uppercase tracking-wider block">
                   Fluid Group Entitlements ({fluidGroups.length} active)
                 </label>
 
@@ -342,17 +344,17 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                       <button
                         key={grp.id}
                         onClick={() => handleToggleGroup(grp.id)}
-                        className={`w-full text-left p-2.5 rounded-[10px] text-xs font-mono transition-all flex items-center justify-between border ${
+                        className={`w-full text-left p-2.5 rounded-lg text-xs font-mono transition-all flex items-center justify-between border ${
                           isChecked
-                            ? 'bg-[#2A2859] border-white/30 text-white font-bold'
-                            : 'bg-white/5 border-white/10 text-slate-400 hover:text-slate-200'
+                            ? 'bg-indigo-50/90 border-indigo-200 text-indigo-900 font-semibold shadow-xs'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
                         }`}
                       >
                         <span>{grp.label}</span>
                         {isChecked ? (
-                          <CheckSquare className="w-4 h-4 text-[#cbb7fb]" />
+                          <CheckSquare className="w-4 h-4 text-indigo-600" />
                         ) : (
-                          <Square className="w-4 h-4 text-slate-600" />
+                          <Square className="w-4 h-4 text-slate-400" />
                         )}
                       </button>
                     );
@@ -362,14 +364,14 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 bg-[#1b1938] border-t border-white/10 flex items-center justify-between">
+            <div className="p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
               <button
                 onClick={() => {
                   setFluidRoleName(currentPersona.role);
                   setFluidLevel(currentPersona.clearanceLevel || 2);
                   setFluidGroups(currentPersona.groups || []);
                 }}
-                className="inline-flex items-center space-x-1 text-xs font-mono text-slate-400 hover:text-white"
+                className="inline-flex items-center space-x-1 text-xs font-mono text-slate-500 hover:text-slate-800"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>Reset</span>
@@ -377,7 +379,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
 
               <button
                 onClick={handleApplyFluidRole}
-                className="px-5 py-2.5 bg-[#2A2859] hover:bg-[#1E1B42] text-white text-xs font-mono font-bold rounded-[10px] border border-white/20 shadow-lg active:scale-95 transition-all"
+                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-mono font-bold rounded-lg shadow-sm active:scale-95 transition-all"
               >
                 Apply Fluid Role State →
               </button>
