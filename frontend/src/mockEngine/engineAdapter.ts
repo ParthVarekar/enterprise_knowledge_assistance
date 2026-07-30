@@ -1,4 +1,4 @@
-// Engine Adapter bridging UI to Engine Logic with Bounded Score Normalization & Real Llama.cpp Integration
+// Engine Adapter bridging UI to Engine Logic with Bounded Score Normalization, Role Fluidity & Real Llama.cpp Integration
 
 export interface UserPersona {
   id: string;
@@ -8,6 +8,9 @@ export interface UserPersona {
   avatar: string;
   groups: string[];
   securityClearance: string;
+  clearanceLevel: number; // 1: Public/Contractor, 2: IC/Employee, 3: Lead/Manager, 4: Staff/Counsel, 5: Executive/Admin
+  department?: string;
+  isFluidRole?: boolean;
 }
 
 export const PRESET_PERSONAS: UserPersona[] = [
@@ -18,7 +21,9 @@ export const PRESET_PERSONAS: UserPersona[] = [
     email: 'alex.vance@acme.com',
     avatar: '⚡',
     groups: ['engineering', 'devops', 'all-employees'],
-    securityClearance: 'Confidential & Internal',
+    securityClearance: 'Level 4: Confidential & Internal',
+    clearanceLevel: 4,
+    department: 'Engineering & DevOps',
   },
   {
     id: 'legal-01',
@@ -27,7 +32,9 @@ export const PRESET_PERSONAS: UserPersona[] = [
     email: 'elena.rostova@acme.com',
     avatar: '⚖️',
     groups: ['legal-team', 'executives', 'all-employees'],
-    securityClearance: 'Restricted, Confidential & Internal',
+    securityClearance: 'Level 5: Restricted, Confidential & Executive',
+    clearanceLevel: 5,
+    department: 'Legal & Executive Counsel',
   },
   {
     id: 'pm-01',
@@ -36,7 +43,9 @@ export const PRESET_PERSONAS: UserPersona[] = [
     email: 'marcus.chen@acme.com',
     avatar: '🚀',
     groups: ['product', 'marketing', 'all-employees'],
-    securityClearance: 'Internal & Public',
+    securityClearance: 'Level 3: Internal & Public',
+    clearanceLevel: 3,
+    department: 'Product Operations',
   },
   {
     id: 'outsider-01',
@@ -45,7 +54,9 @@ export const PRESET_PERSONAS: UserPersona[] = [
     email: 'jordan.vendor@external.com',
     avatar: '🌐',
     groups: ['external-vendors'],
-    securityClearance: 'Public Only',
+    securityClearance: 'Level 1: Public Only',
+    clearanceLevel: 1,
+    department: 'External Advisory',
   },
 ];
 
@@ -95,6 +106,7 @@ export class EngineAdapter {
       title: 'API Gateway Architecture & Token Bucket Algorithm',
       source: 'confluence',
       classification: 'internal',
+      minClearanceLevel: 2,
       url: 'https://wiki.acme.com/spaces/ENG/pages/CONF-001',
       updated: '2026-07-28T10:00:00Z',
       allowedGroups: ['engineering', 'devops'],
@@ -106,6 +118,7 @@ export class EngineAdapter {
       title: 'Blue-Green Deployment Runbook & Incident Protocols',
       source: 'confluence',
       classification: 'confidential',
+      minClearanceLevel: 3,
       url: 'https://wiki.acme.com/spaces/OPS/pages/CONF-002',
       updated: '2026-07-25T14:30:00Z',
       allowedGroups: ['devops', 'engineering'],
@@ -117,6 +130,7 @@ export class EngineAdapter {
       title: 'Engineering Onboarding & Tooling Guide',
       source: 'google_drive',
       classification: 'internal',
+      minClearanceLevel: 2,
       url: 'https://drive.google.com/file/d/GDRIVE-001/view',
       updated: '2026-07-20T09:15:00Z',
       allowedGroups: ['all-employees'],
@@ -128,6 +142,7 @@ export class EngineAdapter {
       title: 'Restricted Customer Data Processing Agreement (DPA)',
       source: 'google_drive',
       classification: 'restricted',
+      minClearanceLevel: 4,
       url: 'https://drive.google.com/file/d/GDRIVE-002/view',
       updated: '2026-07-15T11:00:00Z',
       allowedGroups: ['legal-team', 'executives'],
@@ -139,6 +154,7 @@ export class EngineAdapter {
       title: 'Public Knowledge Base: Password Reset & MFA Setup',
       source: 'zendesk',
       classification: 'public',
+      minClearanceLevel: 1,
       url: 'https://help.acme.com/articles/ZD-001',
       updated: '2026-07-29T16:00:00Z',
       allowedGroups: [],
@@ -150,6 +166,7 @@ export class EngineAdapter {
       title: 'Public Knowledge Base: Subscription Plans & Billing FAQ',
       source: 'zendesk',
       classification: 'public',
+      minClearanceLevel: 1,
       url: 'https://help.acme.com/articles/ZD-002',
       updated: '2026-07-27T08:00:00Z',
       allowedGroups: [],
@@ -162,6 +179,7 @@ export class EngineAdapter {
     const start = performance.now();
     const queryTrimmed = queryText.trim();
     const queryLower = queryTrimmed.toLowerCase();
+    const level = persona.clearanceLevel || 2;
 
     // Check for conversational greetings
     const greetings = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'what can you do', 'help', 'good morning', 'good afternoon', 'good evening'];
@@ -173,13 +191,13 @@ export class EngineAdapter {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `Hello ${persona.name}! I am your Enterprise Knowledge Assistant. I can help you search and retrieve information across Confluence, Google Drive, Zendesk, and Slack while strictly enforcing Zero-Trust ACL access controls for your role as ${persona.role}.\n\nTry asking me about:\n• API gateway architecture and rate limiting\n• Production deployment & blue-green runbooks\n• Password reset & MFA setup instructions\n• Customer Data Processing Agreement (DPA)\n• Subscription plans and billing details`,
+        answerText: `Hello ${persona.name}! I am your Susurrus Enterprise Knowledge Assistant. I am operating under your currently assumed fluid clearance Level ${level} (${persona.role}). Access controls and corporate level usage restrictions are dynamically enforced.\n\nTry asking me about:\n• API gateway architecture and rate limiting\n• Production deployment & blue-green runbooks\n• Password reset & MFA setup instructions\n• Customer Data Processing Agreement (DPA)\n• Subscription plans and billing details`,
         confidenceScore: 0.95,
         isAbstained: false,
         citations: [],
         claims: [
           {
-            claimSentence: `Assisting ${persona.name} as ${persona.role}`,
+            claimSentence: `Assisting ${persona.name} as ${persona.role} (Clearance Level ${level})`,
             supportingChunkIds: [],
             entailmentScore: 0.98,
             isVerified: true,
@@ -191,8 +209,11 @@ export class EngineAdapter {
       };
     }
 
-    // 1. ACL Filter Candidates
+    // 1. ACL Filter Candidates based on BOTH Group Membership AND Fluid Clearance Level
     const eligibleDocs = this.docs.filter(doc => {
+      // Fluid clearance level gate check
+      if (level < doc.minClearanceLevel) return false;
+
       if (doc.visibility === 'public') return true;
       if (doc.visibility === 'tenant_internal') {
         return persona.groups.includes('all-employees') || persona.groups.length > 0;
@@ -203,9 +224,9 @@ export class EngineAdapter {
       return false;
     });
 
-    // Check if user is asking for restricted doc that they lack access to
+    // Check for restricted queries (e.g., DPA, Legal agreements)
     const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing') || queryLower.includes('agreement');
-    const hasLegalAccess = persona.groups.includes('legal-team') || persona.groups.includes('executives');
+    const hasLegalAccess = (persona.groups.includes('legal-team') || persona.groups.includes('executives')) && level >= 4;
 
     if (isRestrictedQuery && !hasLegalAccess) {
       const latencyMs = Number((performance.now() - start + 30).toFixed(1));
@@ -213,10 +234,10 @@ export class EngineAdapter {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification and requires Legal/Executive security clearance.`,
+        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current fluid clearance is Level ${level}.`,
         confidenceScore: 0.12,
         isAbstained: true,
-        abstentionReason: `Zero-Trust ACL Policy: User ${persona.name} (${persona.role}) lacks 'legal-team' or 'executives' group entitlement.`,
+        abstentionReason: `Zero-Trust Role Restriction: User ${persona.name} (${persona.role}) operates at Level ${level} and lacks required 'legal-team' or 'executives' entitlement.`,
         citations: [],
         claims: [],
         candidates: this.docs.map(doc => ({
@@ -292,7 +313,7 @@ export class EngineAdapter {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            { role: 'system', content: 'You are an Enterprise Knowledge Assistant. Answer the user query using the provided context. If no context is provided, give a helpful, concise response.' },
+            { role: 'system', content: `You are Susurrus Enterprise Knowledge Assistant. Answer the user query using the provided context for a user operating at Level ${level} (${persona.role}).` },
             { role: 'user', content: `Context:\n${topContext || 'No specific document context.'}\n\nQuestion: ${queryTrimmed}` }
           ],
           max_tokens: 350,
@@ -313,7 +334,7 @@ export class EngineAdapter {
     const answerText = llamaAnswer 
       ? llamaAnswer 
       : bestMatches.length > 0 
-        ? `Based on verified enterprise documentation:\n\n${bestMatches.map(m => m.content).join('\n\n')}`
+        ? `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`
         : `Here is information relevant to your request:\n\nOur system indexes Confluence, Google Drive, Zendesk, and Slack. Please specify your query regarding rate limiting, deployment runbooks, MFA setup, or subscription plans.`;
 
     // Strictly bounded Confidence Score [0.10, 0.98]
