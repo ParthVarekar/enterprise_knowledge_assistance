@@ -40,6 +40,10 @@ export class AuditLedger {
     return this.records.length;
   }
 
+  public getRecords(): AuditRecord[] {
+    return this.query({});
+  }
+
   public clear(): void {
     this.records = [];
   }

@@ -89,6 +89,10 @@ export class EnterpriseKnowledgeEngine {
   public getAllChunks(): DocumentChunk[] { return this.allChunks; }
 }
 
+export function createEKRSEngine(config: EngineConfig): EnterpriseKnowledgeEngine {
+  return new EnterpriseKnowledgeEngine(config);
+}
+
 export { SparseSearchEngine } from './retrieval/sparseSearch';
 export { VectorStore } from './retrieval/vectorStore';
 export { HybridRetriever } from './retrieval/hybridRetriever';
@@ -103,4 +107,6 @@ export { ZendeskConnector } from './connectors/zendesk';
 export { MarkdownConnector } from './connectors/markdown';
 export { BaseConnector } from './connectors/base';
 export { LlamaCppClient } from './llm/llamaClient';
+export { EKRSRouter, createEKRSRouter } from './server/router';
 export * from './types';
+

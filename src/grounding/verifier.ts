@@ -70,7 +70,7 @@ export class GroundingVerifier {
       }
       const score = claimTokens.size > 0 ? overlap / claimTokens.size : 0;
       if (score > bestScore) bestScore = score;
-      if (score >= this.entailmentThreshold) {
+      if (score >= Math.min(0.25, this.entailmentThreshold)) {
         supportingChunks.push(candidate.chunk.chunk_id);
       }
     }
