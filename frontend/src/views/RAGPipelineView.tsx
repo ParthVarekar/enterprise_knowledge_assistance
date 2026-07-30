@@ -276,7 +276,7 @@ export const RAGPipelineView: React.FC = () => {
 
           <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 shadow-md">
             <div className="text-[11px] font-mono text-slate-400">Decay Lambda (λ)</div>
-            <div className="text-2xl font-bold text-purple-400 font-mono mt-1">{decayLambda}</div>
+            <div className="text-2xl font-bold text-blue-400 font-mono mt-1">{decayLambda}</div>
             <div className="text-[10px] text-slate-500 mt-1">
               Half-life ~{Math.round(Math.log(2) / decayLambda)} Days
             </div>
@@ -414,9 +414,7 @@ export const RAGPipelineView: React.FC = () => {
               {executionResult.candidates.map((cand, idx) => (
                 <tr key={cand.chunkId} className="hover:bg-slate-900/40 transition-colors">
                   <td className="py-3 px-3">
-                    <span className={`w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center ${
-                      idx === 0 ? 'bg-cyan-500 text-slate-950' : 'bg-slate-800 text-slate-400'
-                    }`}>
+                    <span className={idx === 0 ? 'w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center bg-blue-600 text-white' : 'w-5 h-5 rounded-md text-[11px] font-bold flex items-center justify-center bg-slate-800 text-white'}>
                       #{idx + 1}
                     </span>
                   </td>

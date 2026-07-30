@@ -6,13 +6,10 @@ import {
   Bug, 
   ShieldCheck, 
   Zap, 
-  Terminal, 
-  AlertTriangle, 
   Filter, 
   Clock, 
   RotateCw,
   FileCode,
-  Layers,
   Activity
 } from 'lucide-react';
 
@@ -153,7 +150,6 @@ export const AegisQAView: React.FC = () => {
     : SUITE_DATA.filter(item => item.category === activeTab);
 
   const propertyCount = SUITE_DATA.filter(i => i.category === 'Property').length;
-  const mutationCount = SUITE_DATA.filter(i => i.category === 'Mutation').length;
   const fuzzingCount = SUITE_DATA.filter(i => i.category === 'Fuzzing').length;
 
   return (
@@ -162,13 +158,13 @@ export const AegisQAView: React.FC = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-800 pb-5">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-purple-500/10 border border-purple-500/30 text-purple-400">
+            <div className="p-2 rounded-xl bg-blue-500/10 border border-blue-500/30 text-blue-400">
               <Sparkles className="w-6 h-6" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center gap-2">
                 <span>Aegis-QA Autonomous Quality Platform</span>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-purple-500/10 border border-purple-500/30 text-purple-300">
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono bg-blue-500/10 border border-blue-500/30 text-blue-300">
                   Continuous Verification
                 </span>
               </h1>
@@ -183,17 +179,17 @@ export const AegisQAView: React.FC = () => {
           <div className="text-right hidden sm:block">
             <div className="text-[11px] font-mono text-slate-400">Last Execution</div>
             <div className="text-xs font-mono text-slate-200 flex items-center gap-1">
-              <Clock className="w-3 h-3 text-purple-400" />
+              <Clock className="w-3 h-3 text-blue-400" />
               <span>{lastRunTime}</span>
             </div>
           </div>
           <button
             onClick={handleRunSuite}
             disabled={isRunning}
-            className="px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-mono text-xs font-bold rounded-xl flex items-center gap-2.5 shadow-lg shadow-purple-950/40 disabled:opacity-50 transition-all hover:scale-[1.02]"
+            className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-mono text-xs font-bold rounded-xl flex items-center gap-2.5 shadow-lg shadow-blue-950/40 disabled:opacity-50 transition-all hover:scale-[1.02]"
           >
             {isRunning ? (
-              <RotateCw className="w-4 h-4 animate-spin text-purple-200" />
+              <RotateCw className="w-4 h-4 animate-spin text-white" />
             ) : (
               <Play className="w-4 h-4 fill-white" />
             )}
@@ -204,17 +200,17 @@ export const AegisQAView: React.FC = () => {
 
       {/* Execution Progress Bar when running */}
       {isRunning && (
-        <div className="p-4 rounded-xl bg-purple-950/40 border border-purple-500/40 space-y-2 animate-pulse">
+        <div className="p-4 rounded-xl bg-slate-900 border border-blue-500/40 space-y-2 animate-pulse">
           <div className="flex items-center justify-between text-xs font-mono">
-            <span className="text-purple-300 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-purple-400 animate-spin" />
+            <span className="text-blue-300 flex items-center gap-2">
+              <Activity className="w-4 h-4 text-blue-400 animate-spin" />
               <span>{currentStep}</span>
             </span>
-            <span className="text-purple-400 font-bold">{progress}%</span>
+            <span className="text-blue-400 font-bold">{progress}%</span>
           </div>
-          <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-purple-900">
+          <div className="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
             <div
-              className="bg-gradient-to-r from-purple-500 to-cyan-400 h-full transition-all duration-300"
+              className="bg-blue-500 h-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
@@ -238,21 +234,20 @@ export const AegisQAView: React.FC = () => {
           </p>
         </div>
 
-        {/* Mutation Kill Rate Stat Card (3/3 Mutants Killed) */}
-        <div className="glass-panel p-5 rounded-2xl border border-purple-500/30 bg-purple-950/20 space-y-2 relative overflow-hidden">
+        {/* Mutation Kill Rate Stat Card */}
+        <div className="glass-panel p-5 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 space-y-2 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-purple-400 uppercase tracking-wider font-bold">Mutation Kill Rate</span>
-            <Bug className="w-4 h-4 text-purple-400" />
+            <span className="text-xs font-mono text-emerald-400 uppercase tracking-wider font-bold">Mutation Kill Rate</span>
+            <Bug className="w-4 h-4 text-emerald-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-purple-300">100%</span>
-            <span className="text-xs font-mono text-purple-400 font-bold">3 / 3 Mutants Killed</span>
+            <span className="text-3xl font-bold font-mono text-emerald-300">100%</span>
+            <span className="text-xs font-mono text-emerald-400 font-bold">3 / 3 Mutants Killed</span>
           </div>
-          {/* Visual Mini Progress Bar */}
-          <div className="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden border border-purple-900">
-            <div className="bg-purple-400 h-full w-full" />
+          <div className="w-full bg-slate-950 rounded-full h-1.5 overflow-hidden border border-slate-800">
+            <div className="bg-emerald-400 h-full w-full" />
           </div>
-          <p className="text-[11px] text-purple-300/80 leading-tight">
+          <p className="text-[11px] text-emerald-300/80 leading-tight">
             AST logic mutations neutralized with zero false negatives.
           </p>
         </div>
@@ -261,10 +256,10 @@ export const AegisQAView: React.FC = () => {
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono text-slate-400 uppercase tracking-wider">Property Iterations</span>
-            <Zap className="w-4 h-4 text-cyan-400" />
+            <Zap className="w-4 h-4 text-blue-400" />
           </div>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold font-mono text-cyan-300">400</span>
+            <span className="text-3xl font-bold font-mono text-blue-300">400</span>
             <span className="text-xs font-mono text-slate-400">Randomized Trials</span>
           </div>
           <p className="text-[11px] text-slate-400 leading-tight">
@@ -301,7 +296,7 @@ export const AegisQAView: React.FC = () => {
                   onClick={() => setActiveTab(tab)}
                   className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors ${
                     activeTab === tab
-                      ? 'bg-purple-600 text-white font-bold'
+                      ? 'bg-blue-600 text-white font-bold'
                       : 'bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
                   }`}
                 >
@@ -321,19 +316,19 @@ export const AegisQAView: React.FC = () => {
 
         {/* Mutation Kill Banner when Mutation tab or All is active */}
         {(activeTab === 'All' || activeTab === 'Mutation') && (
-          <div className="p-4 rounded-2xl bg-purple-950/40 border border-purple-500/40 flex items-center justify-between gap-4">
+          <div className="p-4 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 flex items-center justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <div className="p-2 rounded-xl bg-purple-500/20 text-purple-400">
+              <div className="p-2 rounded-xl bg-emerald-500/20 text-emerald-400">
                 <Bug className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-sm text-purple-200 font-mono">AST Mutation Score: 100% (3 / 3 Mutants Killed)</h3>
-                <p className="text-xs text-purple-300/80">
+                <h3 className="font-bold text-sm text-emerald-200 font-mono">AST Mutation Score: 100% (3 / 3 Mutants Killed)</h3>
+                <p className="text-xs text-emerald-300/80">
                   Synthesized AST mutants (inverted deny check, removed group check, bypassed tenant check) were all caught and neutralized by the test suite.
                 </p>
               </div>
             </div>
-            <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 font-mono text-xs font-bold border border-purple-500/30 whitespace-nowrap">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 font-mono text-xs font-bold border border-emerald-500/30 whitespace-nowrap">
               3/3 KILLED
             </span>
           </div>
@@ -346,14 +341,14 @@ export const AegisQAView: React.FC = () => {
               key={item.id}
               className={`p-5 rounded-2xl border transition-all space-y-3 ${
                 item.category === 'Mutation'
-                  ? 'bg-slate-900/80 border-purple-500/40 hover:border-purple-500/60'
+                  ? 'bg-slate-900/80 border-emerald-500/40 hover:border-emerald-500/60'
                   : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
               }`}
             >
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center space-x-3">
                   {item.status === 'KILLED' ? (
-                    <div className="p-1.5 rounded-lg bg-purple-500/20 text-purple-300">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/20 text-emerald-300">
                       <Bug className="w-5 h-5" />
                     </div>
                   ) : (
@@ -364,9 +359,9 @@ export const AegisQAView: React.FC = () => {
                       <h4 className="font-bold text-slate-100 text-sm">{item.name}</h4>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${
                         item.category === 'Property'
-                          ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30'
+                          ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
                           : item.category === 'Mutation'
-                          ? 'bg-purple-500/20 text-purple-300 border-purple-500/40 font-bold'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40 font-bold'
                           : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                       }`}>
                         {item.category} Invariant
@@ -381,7 +376,7 @@ export const AegisQAView: React.FC = () => {
                   <span className="text-[11px] font-mono text-slate-500">| {item.executionMs}ms</span>
                   <span className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold ${
                     item.status === 'KILLED'
-                      ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                      ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
                       : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
                   }`}>
                     {item.status === 'KILLED' ? 'MUTANT KILLED' : 'PASSED'}
@@ -393,7 +388,7 @@ export const AegisQAView: React.FC = () => {
               {item.mutantDiff && (
                 <div className="pt-2 border-t border-slate-800 text-xs font-mono space-y-1">
                   <div className="text-[11px] text-slate-400 flex items-center gap-1.5">
-                    <FileCode className="w-3.5 h-3.5 text-purple-400" />
+                    <FileCode className="w-3.5 h-3.5 text-blue-400" />
                     <span>Injected AST Mutation vs Guard Assertions:</span>
                   </div>
                   <div className="p-3 rounded-xl bg-slate-950 border border-slate-900 space-y-1">

@@ -90,12 +90,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                     onClick={() => setActiveTab(item.id)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-sky-500 text-slate-950 shadow-md font-bold'
+                        ? 'bg-blue-600 text-white shadow-md font-bold'
                         : 'text-slate-300 hover:bg-slate-800 hover:text-slate-50'
                     }`}
                   >
                     <div className="flex items-center space-x-2.5 min-w-0">
-                      <span className={isActive ? 'text-slate-950' : 'text-slate-400'}>
+                      <span className={isActive ? 'text-white' : 'text-slate-400'}>
                         {item.icon}
                       </span>
                       <span className="truncate">{item.label}</span>

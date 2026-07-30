@@ -10,12 +10,8 @@ import {
   Search, 
   RotateCw, 
   FileText, 
-  Database, 
-  ArrowUpRight, 
   ShieldAlert, 
-  Users, 
-  ExternalLink,
-  Check
+  Users
 } from 'lucide-react';
 
 interface ConnectorSource {
@@ -92,7 +88,7 @@ const CONNECTOR_SOURCES: ConnectorSource[] = [
     chunks: 5120,
     documents: 94,
     icon: '💬',
-    badgeBg: 'from-purple-600 to-pink-600',
+    badgeBg: 'from-blue-600 to-cyan-600',
     classification: 'Internal',
     classificationType: 'internal',
     lastSync: 'Just now',
@@ -110,7 +106,6 @@ export const ConnectorsView: React.FC = () => {
   const [isSyncingAll, setIsSyncingAll] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Filter Connectors
   const filteredConnectors = connectors.filter(c => {
     const matchesSearch = c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           c.system.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -119,11 +114,9 @@ export const ConnectorsView: React.FC = () => {
     return matchesSearch && matchesClassification;
   });
 
-  // Calculate totals
   const totalChunks = connectors.reduce((acc, curr) => acc + curr.chunks, 0);
   const totalDocs = connectors.reduce((acc, curr) => acc + curr.documents, 0);
 
-  // Individual Sync Handler
   const handleSyncConnector = (id: string, name: string) => {
     setSyncingId(id);
     setTimeout(() => {
@@ -133,7 +126,6 @@ export const ConnectorsView: React.FC = () => {
     }, 1000);
   };
 
-  // Sync All Handler
   const handleSyncAll = () => {
     setIsSyncingAll(true);
     setTimeout(() => {
@@ -153,7 +145,7 @@ export const ConnectorsView: React.FC = () => {
       case 'restricted':
         return 'bg-rose-500/10 text-rose-300 border-rose-500/30';
       case 'confidential':
-        return 'bg-purple-500/10 text-purple-300 border-purple-500/30';
+        return 'bg-amber-500/10 text-amber-300 border-amber-500/30';
       case 'internal':
         return 'bg-cyan-500/10 text-cyan-300 border-cyan-500/30';
       case 'public':
@@ -166,7 +158,7 @@ export const ConnectorsView: React.FC = () => {
       case 'restricted':
         return <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />;
       case 'confidential':
-        return <Lock className="w-3.5 h-3.5 text-purple-400" />;
+        return <Lock className="w-3.5 h-3.5 text-amber-400" />;
       case 'internal':
         return <Users className="w-3.5 h-3.5 text-cyan-400" />;
       case 'public':
@@ -201,12 +193,12 @@ export const ConnectorsView: React.FC = () => {
           <button
             onClick={handleSyncAll}
             disabled={isSyncingAll}
-            className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-mono font-semibold rounded-xl border border-slate-700 flex items-center gap-2 shadow-lg transition-all disabled:opacity-50"
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-xs font-mono font-bold rounded-xl flex items-center gap-2 shadow-lg transition-all disabled:opacity-50"
           >
             {isSyncingAll ? (
-              <RotateCw className="w-4 h-4 text-cyan-400 animate-spin" />
+              <RotateCw className="w-4 h-4 text-white animate-spin" />
             ) : (
-              <RefreshCw className="w-4 h-4 text-cyan-400" />
+              <RefreshCw className="w-4 h-4 text-white" />
             )}
             <span>{isSyncingAll ? 'Re-Ingesting All Sources...' : 'Re-Ingest All Connectors'}</span>
           </button>
@@ -215,7 +207,7 @@ export const ConnectorsView: React.FC = () => {
 
       {/* Notification Toast */}
       {toastMessage && (
-        <div className="p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 text-xs font-mono flex items-center justify-between shadow-xl animate-fade-in">
+        <div className="p-4 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 text-xs font-mono flex items-center justify-between shadow-xl">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4 text-emerald-400" />
             <span>{toastMessage}</span>
@@ -240,9 +232,9 @@ export const ConnectorsView: React.FC = () => {
         <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
           <div className="text-xs font-mono text-slate-400 uppercase tracking-wider flex items-center justify-between">
             <span>Total Index Documents</span>
-            <FileText className="w-4 h-4 text-purple-400" />
+            <FileText className="w-4 h-4 text-blue-400" />
           </div>
-          <div className="text-3xl font-bold text-purple-300 font-mono">
+          <div className="text-3xl font-bold text-blue-300 font-mono">
             {totalDocs.toLocaleString()}
           </div>
           <p className="text-[11px] text-slate-400">Unique source documents processed</p>
@@ -300,7 +292,7 @@ export const ConnectorsView: React.FC = () => {
               onClick={() => setSelectedClassification(tab.value)}
               className={`px-3 py-1 text-xs font-mono rounded-lg transition-colors whitespace-nowrap ${
                 selectedClassification === tab.value
-                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-500/40'
+                  ? 'bg-blue-600 text-white font-bold'
                   : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
               }`}
             >
@@ -349,7 +341,7 @@ export const ConnectorsView: React.FC = () => {
                 {c.description}
               </p>
 
-              {/* Key Metrics: Ingested Chunks & Security Classification Badge */}
+              {/* Key Metrics */}
               <div className="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-slate-400 flex items-center gap-1.5">
@@ -364,7 +356,7 @@ export const ConnectorsView: React.FC = () => {
                 {/* Security Classification Badge */}
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-400 font-mono flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-purple-400" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
                     <span>Security Classification:</span>
                   </span>
                   <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold border flex items-center gap-1.5 ${getBadgeStyle(c.classificationType)}`}>

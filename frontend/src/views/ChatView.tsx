@@ -206,7 +206,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
             <button
               onClick={() => handleSend()}
               disabled={!inputQuery.trim() || isProcessing}
-              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-sky-500 hover:bg-sky-400 text-slate-950 text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
             >
               <span>Ask AI</span>
               <Send className="w-3.5 h-3.5" />
@@ -477,7 +477,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
                         >
                           <div className="flex items-start justify-between gap-2">
                             <div className="flex items-start space-x-2.5 min-w-0">
-                              <span className="w-6 h-6 rounded-md bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-mono font-bold flex items-center justify-center shrink-0 group-hover:bg-sky-400 group-hover:text-slate-950 transition-colors">
+                              <span className="w-6 h-6 rounded-md bg-sky-500/20 border border-sky-500/30 text-sky-300 text-xs font-mono font-bold flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                                 [{cite.citationIndex}]
                               </span>
                               <div className="min-w-0">

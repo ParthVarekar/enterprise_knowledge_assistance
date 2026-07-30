@@ -198,7 +198,7 @@ export const CitationModal: React.FC<CitationModalProps> = ({ citation, onClose 
             </div>
 
             {/* High-Contrast Excerpt Display Box */}
-            <div className="bg-slate-950 border border-slate-800/90 rounded-xl p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed text-slate-100 shadow-inner relative overflow-x-auto selection:bg-cyan-500/30 selection:text-cyan-100 ring-1 ring-cyan-500/10">
+            <div className="bg-slate-950 border border-slate-800/90 rounded-xl p-4 sm:p-5 font-mono text-xs sm:text-sm leading-relaxed text-slate-100 shadow-inner relative overflow-x-auto selection:bg-[#2563eb] selection:text-[#ffffff] ring-1 ring-cyan-500/10">
               <div className="absolute top-0 left-0 bottom-0 w-1 bg-gradient-to-b from-cyan-500 to-blue-600 rounded-l-xl"></div>
               <p className="whitespace-pre-wrap font-mono text-slate-100 pl-2">
                 {citation.excerpt}

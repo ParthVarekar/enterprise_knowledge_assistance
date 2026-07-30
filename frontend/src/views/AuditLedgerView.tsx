@@ -302,9 +302,7 @@ export const AuditLedgerView: React.FC = () => {
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${
-                activeFilterTab === tab.id ? 'bg-cyan-500/30 text-white' : 'bg-slate-800 text-slate-400'
-              }`}>
+              <span className={activeFilterTab === tab.id ? 'px-1.5 py-0.2 rounded-full text-[10px] bg-blue-600 text-white font-bold' : 'px-1.5 py-0.2 rounded-full text-[10px] bg-slate-800 text-white'}>
                 {tab.count}
               </span>
             </button>

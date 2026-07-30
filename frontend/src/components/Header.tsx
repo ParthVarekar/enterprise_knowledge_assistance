@@ -145,7 +145,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                     }}
                     className={`w-full text-left p-3 rounded-xl transition-all border ${
                       isSelected
-                        ? 'bg-sky-500/20 border-sky-500/50 text-slate-50 ring-1 ring-sky-500/30'
+                        ? 'bg-blue-600 border-blue-500 text-white font-bold shadow-md'
                         : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
                     }`}
                   >
