@@ -1,0 +1,26 @@
+{
+  "name": "enterprise-knowledge-assistant",
+  "version": "1.0.0",
+  "description": "Production-grade Slack-native Enterprise Knowledge Assistant with Zero-Trust ACL, Hybrid RAG Retrieval, NLI Grounding, and Aegis-QA Platform.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "demo": "tsc && node dist/demo.js",
+    "server": "tsc && node dist/slack/server.js",
+    "test": "vitest run",
+    "test:eval": "vitest run tests/eval.test.ts tests/aegisQA.test.ts"
+  },
+  "keywords": ["rag", "enterprise-search", "slack-bot", "zero-trust-acl", "grounding", "nli", "aegis-qa"],
+  "author": "Parth Varekar",
+  "license": "MIT",
+  "dependencies": {
+    "@slack/bolt": "^3.21.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "typescript": "^5.5.2",
+    "vitest": "^1.6.0"
+  }
+}
