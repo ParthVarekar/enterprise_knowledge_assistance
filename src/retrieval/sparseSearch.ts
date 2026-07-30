@@ -46,12 +46,19 @@ export class SparseSearchEngine {
       const docLen = this.docLengths.get(chunk.chunk_id) || 1;
       const termFreqs = this.docTermFreqs.get(chunk.chunk_id) || new Map();
       for (const token of queryTokens) {
-        if (!termFreqs.has(token)) continue;
-        const tf = termFreqs.get(token)!;
-        const df = this.docFreqs.get(token) || 0;
+        let matchedTf = 0;
+        let matchedDf = 0;
+        for (const [docToken, tf] of termFreqs.entries()) {
+          if (docToken === token || docToken.startsWith(token) || token.startsWith(docToken)) {
+            matchedTf += tf;
+            matchedDf = Math.max(matchedDf, this.docFreqs.get(docToken) || 0);
+          }
+        }
+        if (matchedTf === 0) continue;
+        const df = matchedDf || 1;
         const idf = Math.log((N - df + 0.5) / (df + 0.5) + 1);
-        const numerator = tf * (this.k1 + 1);
-        const denominator = tf + this.k1 * (1 - this.b + (this.b * docLen) / this.avgDocLength);
+        const numerator = matchedTf * (this.k1 + 1);
+        const denominator = matchedTf + this.k1 * (1 - this.b + (this.b * docLen) / this.avgDocLength);
         score += idf * (numerator / denominator);
       }
       if (score > 0) scores.set(chunk.chunk_id, score);

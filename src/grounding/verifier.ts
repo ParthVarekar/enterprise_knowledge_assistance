@@ -42,9 +42,9 @@ export class GroundingVerifier {
 
   private extractClaims(text: string): string[] {
     return text
-      .split(/[.!?]+/)
+      .split(/[.!?\n]+/)
       .map(s => s.trim())
-      .filter(s => s.length > 10);
+      .filter(s => s.length > 10 && !s.toLowerCase().startsWith('based on the available') && !s.toLowerCase().startsWith('based on verified'));
   }
 
   private findBestEvidence(claim: string, candidates: ScoredCandidate[]): { score: number; chunkIds: string[] } {
