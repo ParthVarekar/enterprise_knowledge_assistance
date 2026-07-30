@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { UserPersona, EngineAdapter, QueryResult } from '../mockEngine/engineAdapter';
 import { GroundingBadge } from '../components/GroundingBadge';
 import { CitationModal } from '../components/CitationModal';
+import { renderCuteAvatar } from '../components/ui/CuteIcons';
 import {
   Send,
   Bot,
@@ -19,8 +20,11 @@ import {
   ChevronUp,
   Cpu,
   MessageSquare,
-  Command,
-  CornerDownLeft
+  CornerDownLeft,
+  Rocket,
+  Key,
+  CreditCard,
+  BookOpen
 } from 'lucide-react';
 
 interface ChatViewProps {
@@ -46,39 +50,51 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
       category: 'Architecture',
       label: 'API Rate Limits',
       query: 'How does our API gateway handle rate limiting?',
-      icon: '⚡',
+      icon: 'zap',
     },
     {
       category: 'DevOps',
       label: 'Deployment Runbook',
       query: 'What is the production deployment and rollback process?',
-      icon: '🚀',
+      icon: 'rocket',
     },
     {
       category: 'Security',
       label: 'Restricted DPA Policy',
       query: 'What are the details of the customer Data Processing Agreement (DPA)?',
-      icon: '🔒',
+      icon: 'lock',
     },
     {
       category: 'Identity',
       label: 'Password & MFA Setup',
       query: 'How do users reset their password and set up MFA?',
-      icon: '🔑',
+      icon: 'key',
     },
     {
       category: 'Billing',
       label: 'Pricing & Plans FAQ',
       query: 'What subscription plans and billing options are available?',
-      icon: '💳',
+      icon: 'credit-card',
     },
     {
       category: 'Onboarding',
       label: 'Engineering Onboarding',
       query: 'What is the engineering onboarding process and tooling guide?',
-      icon: '📖',
+      icon: 'book-open',
     },
   ];
+
+  const renderChipIcon = (iconName: string) => {
+    switch (iconName) {
+      case 'zap': return <Zap className="w-3.5 h-3.5 text-amber-600" />;
+      case 'rocket': return <Rocket className="w-3.5 h-3.5 text-purple-600" />;
+      case 'lock': return <Lock className="w-3.5 h-3.5 text-rose-600" />;
+      case 'key': return <Key className="w-3.5 h-3.5 text-indigo-600" />;
+      case 'credit-card': return <CreditCard className="w-3.5 h-3.5 text-blue-600" />;
+      case 'book-open': return <BookOpen className="w-3.5 h-3.5 text-emerald-600" />;
+      default: return <Sparkles className="w-3.5 h-3.5 text-indigo-600" />;
+    }
+  };
 
   const handleSend = async (textToSend?: string) => {
     const q = textToSend || inputQuery;
@@ -154,8 +170,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
 
         {/* Persona Clearance Pill */}
         <div className="flex items-center space-x-3 bg-slate-50 border border-slate-200 px-4 py-2.5 rounded-xl">
-          <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center text-xl font-bold shadow-xs">
-            {currentPersona.avatar}
+          <div className="w-9 h-9 rounded-full bg-slate-100 border border-slate-200 text-indigo-700 flex items-center justify-center shrink-0 shadow-xs font-bold">
+            {renderCuteAvatar(currentPersona.avatar)}
           </div>
           <div className="text-xs">
             <div className="font-bold text-slate-900 flex items-center gap-1.5">
@@ -223,7 +239,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
                 onClick={() => handleSend(chip.query)}
                 className="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200/80 border border-slate-200 text-xs font-semibold text-slate-700 whitespace-nowrap transition-all flex items-center space-x-1.5 active:scale-95 shadow-2xs"
               >
-                <span>{chip.icon}</span>
+                {renderChipIcon(chip.icon)}
                 <span>{chip.label}</span>
               </button>
             ))}
@@ -293,8 +309,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
               {/* RAG Telemetry Header */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-200/80 pb-4">
                 <div className="flex items-start space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-700 flex items-center justify-center text-xl shrink-0 mt-0.5 shadow-xs font-bold">
-                    {res.user.avatar}
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 text-indigo-700 flex items-center justify-center shrink-0 mt-0.5 shadow-2xs font-bold">
+                    {renderCuteAvatar(res.user.avatar)}
                   </div>
                   <div>
                     <h4 className="font-bold text-lg text-slate-900 leading-snug tracking-tight">

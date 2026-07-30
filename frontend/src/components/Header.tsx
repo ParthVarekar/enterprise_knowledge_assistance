@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { UserPersona, PRESET_PERSONAS } from '../mockEngine/engineAdapter';
+import { renderCuteAvatar } from './ui/CuteIcons';
 import {
   ShieldCheck,
   Cpu,
@@ -183,7 +184,9 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center space-x-2.5 px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 border border-slate-300 text-slate-900 transition-all text-left font-medium text-xs shadow-xs"
         >
-          <span className="text-base">{currentPersona.avatar}</span>
+          <div className="w-5 h-5 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+            {renderCuteAvatar(currentPersona.avatar)}
+          </div>
           <div className="hidden sm:block">
             <div className="font-bold text-xs text-slate-900 flex items-center gap-1">
               <span>{currentPersona.name}</span>
@@ -235,7 +238,9 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                     }`}
                   >
                     <div className="flex items-start space-x-3">
-                      <span className="text-xl">{persona.avatar}</span>
+                      <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
+                        {renderCuteAvatar(persona.avatar)}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <span className={`text-xs font-bold ${isSelected ? 'text-indigo-700' : 'text-slate-900'}`}>

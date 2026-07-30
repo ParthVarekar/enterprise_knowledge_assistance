@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { renderCuteConnectorIcon } from '../components/ui/CuteIcons';
 import { 
   Plug, 
   CheckCircle2, 
@@ -314,8 +315,8 @@ export const ConnectorsView: React.FC = () => {
               {/* Card Top Row: Header & Status */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-2xl shadow-2xs group-hover:scale-105 transition-transform">
-                    {c.icon}
+                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                    {renderCuteConnectorIcon(c.icon)}
                   </div>
                   <div>
                     <h3 className="font-extrabold text-base text-slate-900 tracking-tight">{c.name}</h3>
