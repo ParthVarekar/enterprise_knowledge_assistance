@@ -16,7 +16,7 @@ export class LlamaCppClient {
   private timeoutMs: number;
 
   constructor(options: LlamaServerOptions = {}) {
-    this.baseUrl = options.baseUrl || 'http://127.0.0.1:8080';
+    this.baseUrl = options.baseUrl || 'http://127.0.0.1:8085';
     this.timeoutMs = options.timeoutMs || 15000;
   }
 
