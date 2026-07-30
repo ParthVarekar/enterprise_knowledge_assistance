@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { UserPersona, PRESET_PERSONAS } from '../mockEngine/engineAdapter';
 import {
   ShieldCheck,
@@ -258,10 +259,10 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
         )}
       </div>
 
-      {/* Fluid Role & Clearance Level Editor Modal */}
-      {isFluidModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-150 overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl space-y-0 my-auto">
+      {/* Fluid Role & Clearance Level Editor Modal Popup Card */}
+      {isFluidModalOpen && createPortal(
+        <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 sm:p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-150 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl space-y-0 my-auto animate-in zoom-in-95 duration-150">
             {/* Modal Header */}
             <div className="p-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
@@ -385,7 +386,8 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
