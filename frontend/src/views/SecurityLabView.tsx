@@ -14,7 +14,8 @@ import {
   Filter, 
   Zap, 
   Key,
-  Layers
+  Layers,
+  SlidersHorizontal
 } from 'lucide-react';
 import { PRESET_PERSONAS, UserPersona } from '../mockEngine/engineAdapter';
 
