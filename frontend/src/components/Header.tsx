@@ -48,7 +48,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
 
     if (lower.includes('restricted')) {
       badges.push(
-        <span key="restricted" className="inline-flex items-center gap-1 font-mono font-semibold rounded px-2 py-0.5 text-[10px] bg-[#aa2d00] text-[#ffffff]">
+        <span key="restricted" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] bg-rose-950 border border-rose-500/40 text-rose-300">
           <ShieldAlert className="w-2.5 h-2.5" />
           Restricted
         </span>
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('confidential')) {
       badges.push(
-        <span key="confidential" className="inline-flex items-center gap-1 font-mono font-semibold rounded px-2 py-0.5 text-[10px] bg-[#d9a441] text-[#181d26]">
+        <span key="confidential" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] bg-amber-950 border border-amber-500/40 text-amber-300">
           <Lock className="w-2.5 h-2.5" />
           Confidential
         </span>
@@ -64,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('internal')) {
       badges.push(
-        <span key="internal" className="inline-flex items-center gap-1 font-mono font-semibold rounded px-2 py-0.5 text-[10px] bg-[#f8fafc] text-[#181d26] border border-[#dddddd]">
+        <span key="internal" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] bg-sky-950 border border-sky-500/40 text-sky-300">
           <Building2 className="w-2.5 h-2.5" />
           Internal
         </span>
@@ -72,7 +72,7 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
     }
     if (lower.includes('public')) {
       badges.push(
-        <span key="public" className="inline-flex items-center gap-1 font-mono font-semibold rounded px-2 py-0.5 text-[10px] bg-[#a8d8c4] text-[#0a2e0e]">
+        <span key="public" className="inline-flex items-center gap-1 font-mono font-bold rounded px-2 py-0.5 text-[10px] bg-emerald-950 border border-emerald-500/40 text-emerald-300">
           <Globe className="w-2.5 h-2.5" />
           Public
         </span>
@@ -83,26 +83,26 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
   };
 
   return (
-    <header className="h-16 bg-[#ffffff] border-b border-[#dddddd] px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40">
+    <header className="h-16 bg-slate-900 border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40">
       {/* Live System Status Indicators */}
       <div className="flex items-center space-x-3 overflow-x-auto py-1">
         {/* Zero-Trust ACL Gate Status */}
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#f8fafc] border border-[#dddddd] text-[#181d26] text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-[#006400]" />
-          <ShieldCheck className="w-3.5 h-3.5 text-[#006400]" />
-          <span className="font-semibold text-xs">Zero-Trust ACL Gate: Active</span>
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-950 border border-emerald-500/40 text-slate-100 text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+          <span className="font-bold text-xs text-slate-100">Zero-Trust ACL Gate: Active</span>
         </div>
 
         {/* Local Llama CUDA Status */}
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-[#f8fafc] border border-[#dddddd] text-[#181d26] text-xs font-mono">
-          <span className="w-2 h-2 rounded-full bg-[#1b61c9]" />
-          <Cpu className="w-3.5 h-3.5 text-[#1b61c9]" />
-          <span className="font-semibold text-xs">Llama.cpp CUDA: Port 8085</span>
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-950 border border-sky-500/40 text-slate-100 text-xs font-mono">
+          <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
+          <Cpu className="w-3.5 h-3.5 text-sky-400" />
+          <span className="font-bold text-xs text-slate-100">Llama.cpp CUDA: Port 8085</span>
         </div>
 
-        <div className="hidden xl:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#f8fafc] border border-[#dddddd] text-xs font-mono text-[#41454d]">
-          <Server className="w-3.5 h-3.5" />
-          <span>Tenant: <strong className="text-[#181d26]">acme-corp</strong></span>
+        <div className="hidden xl:flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-slate-950 border border-slate-800 text-xs font-mono text-slate-300">
+          <Server className="w-3.5 h-3.5 text-slate-400" />
+          <span>Tenant: <strong className="text-slate-100">acme-corp</strong></span>
         </div>
       </div>
 
@@ -110,23 +110,24 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
       <div className="relative" ref={dropdownRef}>
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center space-x-2.5 px-4 py-2 rounded-full bg-[#181d26] text-[#ffffff] hover:bg-[#0d1218] transition-colors text-left font-medium text-xs shadow-sm"
+          className="flex items-center space-x-2.5 px-4 py-2 rounded-xl bg-slate-950 border border-slate-700 text-slate-100 hover:bg-slate-800 transition-all text-left font-semibold text-xs shadow-md"
         >
           <span className="text-base">{currentPersona.avatar}</span>
           <div className="hidden sm:block">
-            <div className="font-semibold text-xs text-[#ffffff] flex items-center gap-1.5">
+            <div className="font-bold text-xs text-slate-50 flex items-center gap-1.5">
               <span>{currentPersona.name}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown className={`w-3.5 h-3.5 text-sky-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </div>
+            <div className="text-[10px] text-sky-300 font-mono">{currentPersona.role}</div>
           </div>
         </button>
 
         {isOpen && (
-          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-[#ffffff] border border-[#dddddd] rounded-xl shadow-xl overflow-hidden z-50">
-            <div className="p-3.5 bg-[#f8fafc] border-b border-[#dddddd] flex items-center justify-between">
+          <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden z-50">
+            <div className="p-3.5 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <UserCheck className="w-4 h-4 text-[#181d26]" />
-                <h3 className="text-xs font-bold text-[#181d26] uppercase tracking-wider font-mono">
+                <UserCheck className="w-4 h-4 text-sky-400" />
+                <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider font-mono">
                   Select User Persona
                 </h3>
               </div>
@@ -142,25 +143,25 @@ export const Header: React.FC<HeaderProps> = ({ currentPersona, onSelectPersona 
                       onSelectPersona(persona);
                       setIsOpen(false);
                     }}
-                    className={`w-full text-left p-3 rounded-lg transition-all border ${
+                    className={`w-full text-left p-3 rounded-xl transition-all border ${
                       isSelected
-                        ? 'bg-[#181d26] text-[#ffffff] border-[#181d26]'
-                        : 'bg-[#ffffff] hover:bg-[#f8fafc] border-[#dddddd] text-[#181d26]'
+                        ? 'bg-sky-500/20 border-sky-500/50 text-slate-50 ring-1 ring-sky-500/30'
+                        : 'bg-slate-950 hover:bg-slate-800 border-slate-800 text-slate-200'
                     }`}
                   >
                     <div className="flex items-start space-x-3">
                       <span className="text-xl">{persona.avatar}</span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <span className={`text-xs font-bold ${isSelected ? 'text-[#ffffff]' : 'text-[#181d26]'}`}>
+                          <span className={`text-xs font-bold ${isSelected ? 'text-sky-300' : 'text-slate-100'}`}>
                             {persona.name}
                           </span>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#a8d8c4]" />}
+                          {isSelected && <Check className="w-4 h-4 text-sky-400" />}
                         </div>
-                        <div className={`text-[11px] ${isSelected ? 'text-[#e0e2e6]' : 'text-[#41454d]'}`}>
+                        <div className="text-[11px] text-slate-300 font-medium">
                           {persona.role}
                         </div>
-                        <div className="mt-2 pt-1.5 border-t border-slate-200/40">
+                        <div className="mt-2 pt-1.5 border-t border-slate-800">
                           {renderClearanceBadges(persona.securityClearance)}
                         </div>
                       </div>

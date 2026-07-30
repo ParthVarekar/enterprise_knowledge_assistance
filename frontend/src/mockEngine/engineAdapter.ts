@@ -1,4 +1,4 @@
-// Engine Adapter bridging UI to Engine Logic with Real Local Llama.cpp CUDA Integration & Conversational Handling
+// Engine Adapter bridging UI to Engine Logic with Bounded Score Normalization & Real Llama.cpp Integration
 
 export interface UserPersona {
   id: string;
@@ -54,7 +54,7 @@ export interface QueryResult {
   queryText: string;
   user: UserPersona;
   answerText: string;
-  confidenceScore: number;
+  confidenceScore: number; // Strictly bounded [0.0, 1.0]
   isAbstained: boolean;
   abstentionReason?: string;
   citations: {
@@ -70,7 +70,7 @@ export interface QueryResult {
   claims: {
     claimSentence: string;
     supportingChunkIds: string[];
-    entailmentScore: number;
+    entailmentScore: number; // Strictly bounded [0.0, 1.0]
     isVerified: boolean;
   }[];
   candidates: {
@@ -223,11 +223,11 @@ export class EngineAdapter {
           chunkId: doc.id,
           documentTitle: doc.title,
           sourceSystem: doc.source,
-          sparseScore: doc.id === 'GDRIVE-002' ? 3.5 : 0.2,
-          denseScore: doc.id === 'GDRIVE-002' ? 0.92 : 0.3,
-          rrfScore: doc.id === 'GDRIVE-002' ? 0.95 : 0.1,
+          sparseScore: doc.id === 'GDRIVE-002' ? 0.85 : 0.05,
+          denseScore: doc.id === 'GDRIVE-002' ? 0.92 : 0.12,
+          rrfScore: doc.id === 'GDRIVE-002' ? 0.95 : 0.10,
           temporalDecay: 0.98,
-          finalScore: doc.id === 'GDRIVE-002' ? 0.94 : 0.2,
+          finalScore: doc.id === 'GDRIVE-002' ? 0.89 : 0.08,
           aclPassed: eligibleDocs.includes(doc),
         })),
         latencyMs,
@@ -235,7 +235,7 @@ export class EngineAdapter {
       };
     }
 
-    // 2. Score Candidates
+    // 2. Score Candidates with STRICT NORMALIZATION [0.0, 1.0]
     const tokens = queryLower.split(/\s+/).filter(t => t.length > 2);
     const candidateScores = eligibleDocs.map(doc => {
       let matches = 0;
@@ -245,12 +245,24 @@ export class EngineAdapter {
         }
       }
 
-      const sparseScore = tokens.length > 0 ? (matches / tokens.length) * 4.5 : 0;
-      const denseScore = matches > 0 ? 0.75 + matches * 0.08 : 0.45;
-      const rrfScore = matches > 0 ? 0.88 : 0.3;
+      // Normalized Sparse Score [0, 1]
+      const rawSparse = tokens.length > 0 ? (matches / tokens.length) : 0;
+      const sparseScore = Math.min(1.0, Math.max(0.0, rawSparse));
+
+      // Normalized Dense Score [0, 1]
+      const rawDense = matches > 0 ? 0.70 + Math.min(0.28, matches * 0.07) : 0.30;
+      const denseScore = Math.min(1.0, Math.max(0.0, rawDense));
+
+      // Reciprocal Rank Fusion [0, 1]
+      const rrfScore = matches > 0 ? 0.85 : 0.20;
+
+      // Temporal Decay [0, 1]
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
-      const finalScore = (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay;
+
+      // Final Bounded Composite Score [0.0, 1.0]
+      const unscaledFinal = (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay;
+      const finalScore = Number(Math.min(0.98, Math.max(0.0, unscaledFinal)).toFixed(3));
 
       return {
         chunkId: doc.id,
@@ -260,7 +272,7 @@ export class EngineAdapter {
         denseScore: Number(denseScore.toFixed(3)),
         rrfScore: Number(rrfScore.toFixed(3)),
         temporalDecay: Number(temporalDecay.toFixed(3)),
-        finalScore: Number(finalScore.toFixed(3)),
+        finalScore,
         aclPassed: true,
         content: doc.content,
         url: doc.url,
@@ -271,7 +283,7 @@ export class EngineAdapter {
 
     const bestMatches = candidateScores.length > 0 ? candidateScores.slice(0, 3) : [];
     
-    // Try calling local Llama.cpp GPU server on port 8085 if available
+    // Call local Llama.cpp GPU server on port 8085 if available
     let llamaAnswer: string | null = null;
     try {
       const topContext = bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n');
@@ -304,12 +316,15 @@ export class EngineAdapter {
         ? `Based on verified enterprise documentation:\n\n${bestMatches.map(m => m.content).join('\n\n')}`
         : `Here is information relevant to your request:\n\nOur system indexes Confluence, Google Drive, Zendesk, and Slack. Please specify your query regarding rate limiting, deployment runbooks, MFA setup, or subscription plans.`;
 
-    const confidenceScore = Number((0.82 + (bestMatches[0]?.finalScore || 0.1) * 0.15).toFixed(2));
+    // Strictly bounded Confidence Score [0.10, 0.98]
+    const topScore = bestMatches[0]?.finalScore || 0.40;
+    const rawConfidence = 0.72 + (topScore * 0.25);
+    const confidenceScore = Number(Math.min(0.98, Math.max(0.10, rawConfidence)).toFixed(2));
 
     const claims = bestMatches.map(m => ({
       claimSentence: m.content.substring(0, 110) + '...',
       supportingChunkIds: [m.chunkId],
-      entailmentScore: Number((0.85 + Math.random() * 0.12).toFixed(2)),
+      entailmentScore: Number(Math.min(0.98, Math.max(0.70, 0.82 + Math.random() * 0.12)).toFixed(2)),
       isVerified: true,
     }));
 

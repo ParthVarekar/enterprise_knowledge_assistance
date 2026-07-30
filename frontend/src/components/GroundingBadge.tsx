@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface GroundingBadgeProps {
   score: number;
@@ -7,22 +7,23 @@ interface GroundingBadgeProps {
 }
 
 export const GroundingBadge: React.FC<GroundingBadgeProps> = ({ score, isAbstained }) => {
-  const percentage = Math.round(score * 100);
+  // Strictly clamp percentage between 0% and 99%
+  const percentage = Math.min(99, Math.max(0, Math.round(score * 100)));
 
   if (isAbstained) {
     return (
-      <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-mono font-medium">
-        <AlertTriangle className="w-3.5 h-3.5" />
-        <span>Abstained (Insufficient Evidence)</span>
+      <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-amber-950/60 border border-amber-500/40 text-amber-300 text-xs font-mono font-medium">
+        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+        <span>Abstained (ACL / Insufficient Evidence)</span>
       </div>
     );
   }
 
   const colorStyle = percentage >= 75
-    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+    ? 'bg-emerald-950/60 border-emerald-500/40 text-emerald-300'
     : percentage >= 50
-    ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-400'
-    : 'bg-amber-500/10 border-amber-500/30 text-amber-400';
+    ? 'bg-cyan-950/60 border-cyan-500/40 text-cyan-300'
+    : 'bg-amber-950/60 border-amber-500/40 text-amber-300';
 
   return (
     <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-full border text-xs font-mono font-medium ${colorStyle}`}>

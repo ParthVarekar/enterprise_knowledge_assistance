@@ -52,23 +52,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
   ];
 
   return (
-    <aside className="w-64 bg-[#181d26] border-r border-[#2d333f] text-[#ffffff] flex flex-col justify-between h-screen sticky top-0 z-20 select-none">
+    <aside className="w-64 bg-slate-900 border-r border-slate-800 text-slate-100 flex flex-col justify-between h-screen sticky top-0 z-20 select-none">
       <div>
         {/* Brand Header */}
-        <div className="p-4 border-b border-[#2d333f] flex items-center space-x-3 bg-[#0d1218]">
-          <div className="w-8 h-8 rounded-lg bg-[#ffffff] text-[#181d26] flex items-center justify-center shadow font-bold">
-            <Lock className="w-4 h-4 text-[#181d26]" />
+        <div className="p-4 border-b border-slate-800 flex items-center space-x-3 bg-slate-950">
+          <div className="w-9 h-9 rounded-xl bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 font-bold shadow-md">
+            <Lock className="w-4 h-4" />
           </div>
           <div className="flex flex-col min-w-0">
             <div className="flex items-center space-x-1.5">
-              <h1 className="font-semibold text-[#ffffff] text-sm tracking-tight truncate">
+              <h1 className="font-bold text-slate-50 text-sm tracking-tight truncate">
                 Enterprise AI
               </h1>
-              <span className="px-1.5 py-0.2 text-[9px] font-mono font-semibold bg-[#2a303c] text-[#a8d8c4] border border-[#3e4656] rounded">
+              <span className="px-1.5 py-0.2 text-[9px] font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-500/30 rounded">
                 PRO
               </span>
             </div>
-            <p className="text-[11px] text-[#9297a0] font-mono tracking-wider truncate">
+            <p className="text-[11px] text-sky-400 font-mono tracking-wider truncate">
               Zero-Trust RAG v1.0
             </p>
           </div>
@@ -78,7 +78,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
         <nav className="p-3 space-y-5">
           {navSections.map((section, sIdx) => (
             <div key={sIdx} className="space-y-1">
-              <div className="px-3 pb-1.5 text-[10px] font-mono font-semibold text-[#9297a0] uppercase tracking-widest flex items-center space-x-2">
+              <div className="px-3 pb-1.5 text-[10px] font-mono font-bold text-slate-400 uppercase tracking-widest flex items-center space-x-2">
                 <span>{section.title}</span>
               </div>
 
@@ -88,14 +88,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
                   <button
                     key={item.id}
                     onClick={() => setActiveTab(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors duration-150 ${
+                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                       isActive
-                        ? 'bg-[#ffffff] text-[#181d26] font-semibold shadow-sm'
-                        : 'text-[#e0e2e6] hover:bg-[#252b37] hover:text-[#ffffff]'
+                        ? 'bg-sky-500 text-slate-950 shadow-md font-bold'
+                        : 'text-slate-300 hover:bg-slate-800 hover:text-slate-50'
                     }`}
                   >
                     <div className="flex items-center space-x-2.5 min-w-0">
-                      <span className={isActive ? 'text-[#181d26]' : 'text-[#9297a0]'}>
+                      <span className={isActive ? 'text-slate-950' : 'text-slate-400'}>
                         {item.icon}
                       </span>
                       <span className="truncate">{item.label}</span>
@@ -103,10 +103,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
 
                     <div className="flex items-center space-x-1.5">
                       {item.badge && (
-                        <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded font-medium border ${
+                        <span className={`px-1.5 py-0.5 text-[10px] font-mono rounded font-bold border ${
                           isActive 
-                            ? 'bg-[#181d26] text-[#ffffff] border-[#181d26]' 
-                            : 'bg-[#2a303c] text-[#a8d8c4] border-[#3e4656]'
+                            ? 'bg-slate-950 text-sky-300 border-slate-800' 
+                            : 'bg-slate-800 text-slate-400 border-slate-700'
                         }`}>
                           {item.badge}
                         </span>
@@ -121,14 +121,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
       </div>
 
       {/* System Status Badge */}
-      <div className="p-3 border-t border-[#2d333f] bg-[#0d1218]">
-        <div className="p-3 rounded-lg bg-[#181d26] border border-[#2d333f] space-y-2">
+      <div className="p-3 border-t border-slate-800 bg-slate-950">
+        <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="w-2 h-2 rounded-full bg-[#39bf45] shadow" />
-              <span className="text-[11px] font-semibold font-mono text-[#ffffff] flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-sm animate-pulse" />
+              <span className="text-[11px] font-bold font-mono text-slate-100 flex items-center gap-1.5">
                 Llama.cpp
-                <span className="text-[#a8d8c4] text-[10px] bg-[#2a303c] px-1.5 py-0.2 rounded border border-[#3e4656]">
+                <span className="text-sky-300 text-[10px] bg-sky-950 px-1.5 py-0.2 rounded border border-sky-500/30">
                   CUDA
                 </span>
               </span>
@@ -137,20 +137,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, setActiveTab }) => 
               href="https://github.com/ParthVarekar/enterprise_knowledge_assistance"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#9297a0] hover:text-[#ffffff] transition-colors p-1"
+              className="text-slate-400 hover:text-sky-400 transition-colors p-1"
               title="GitHub Repository"
             >
               <Github className="w-3.5 h-3.5" />
             </a>
           </div>
 
-          <div className="flex items-center justify-between text-[10px] font-mono text-[#9297a0] pt-1.5 border-t border-[#2d333f]">
-            <div className="flex items-center space-x-1 text-[#39bf45]">
+          <div className="flex items-center justify-between text-[10px] font-mono text-slate-300 pt-1.5 border-t border-slate-800">
+            <div className="flex items-center space-x-1 text-emerald-400 font-semibold">
               <Cpu className="w-3 h-3" />
               <span>GPU Accelerated</span>
             </div>
-            <div className="flex items-center space-x-1 text-[#e0e2e6]">
-              <Zap className="w-3 h-3 text-[#f4d35e]" />
+            <div className="flex items-center space-x-1 text-sky-400 font-semibold">
+              <Zap className="w-3 h-3 text-sky-400" />
               <span>Port 8085</span>
             </div>
           </div>
