@@ -152,6 +152,24 @@ export const EKRSWidget: React.FC = () => {
             ))}
           </div>
 
+          {/* Quick Pitch Chips */}
+          <div className="px-3 pt-2.5 bg-slate-50 flex items-center gap-1.5 overflow-x-auto pb-1">
+            {[
+              { label: '⚡ Rate Limits', query: 'How does our API gateway handle rate limiting?' },
+              { label: '🚀 Rollbacks', query: 'What is the production deployment and rollback process?' },
+              { label: '🔒 Security DPA', query: 'What are the details of the customer Data Processing Agreement (DPA)?' },
+              { label: '🔑 MFA Setup', query: 'How do users reset their password and set up MFA?' },
+            ].map((chip, idx) => (
+              <button
+                key={idx}
+                onClick={() => executeQuery(chip.query)}
+                className="px-2 py-0.5 rounded bg-white hover:bg-slate-200 border border-slate-200 text-[10px] font-mono text-slate-700 whitespace-nowrap shadow-2xs font-semibold"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+
           {/* Drawer Input Bar */}
           <div className="p-3 bg-slate-50 border-t border-slate-200">
             <div className="relative">

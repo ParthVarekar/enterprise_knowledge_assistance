@@ -44,21 +44,21 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
   const samplePromptChips: PromptChip[] = [
     {
       category: 'Architecture',
-      label: 'API Gateway & Rate Limits',
-      query: 'What is the api gateway like for cross continental use?',
+      label: 'API Rate Limits',
+      query: 'How does our API gateway handle rate limiting?',
       icon: '⚡',
     },
     {
       category: 'DevOps',
-      label: 'Deployments & Rollbacks',
+      label: 'Deployment Runbook',
       query: 'What is the production deployment and rollback process?',
       icon: '🚀',
     },
     {
-      category: 'Legal',
-      label: 'Customer DPA Details',
+      category: 'Security',
+      label: 'Restricted DPA Policy',
       query: 'What are the details of the customer Data Processing Agreement (DPA)?',
-      icon: '⚖️',
+      icon: '🔒',
     },
     {
       category: 'Identity',
@@ -68,14 +68,14 @@ export const ChatView: React.FC<ChatViewProps> = ({ currentPersona }) => {
     },
     {
       category: 'Billing',
-      label: 'Plans & Pricing FAQ',
-      query: 'What subscription plans and billing discounts are available?',
+      label: 'Pricing & Plans FAQ',
+      query: 'What subscription plans and billing options are available?',
       icon: '💳',
     },
     {
       category: 'Onboarding',
       label: 'Engineering Onboarding',
-      query: 'What is the engineering onboarding process and mandatory training?',
+      query: 'What is the engineering onboarding process and tooling guide?',
       icon: '📖',
     },
   ];
