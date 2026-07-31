@@ -109,7 +109,7 @@ const STOP_WORDS = new Set([
   'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
   'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just',
   'don', 'should', 'now', 'tell', 'me', 'bit', 'your', 'you', 'my', 'i', 'we', 'our', 'us',
-  'please', 'could', 'would'
+  'please', 'could', 'would', 'handle', 'even', 'relevant', 'policy', 'users', 'user', 'point', 'view'
 ]);
 
 export class EngineAdapter {
@@ -259,7 +259,7 @@ export class EngineAdapter {
     });
 
     // Check for restricted queries (e.g. DPA, Legal agreements)
-    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing agreement');
+    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing agreement') || queryLower.includes('data processing');
     const hasLegalAccess = (persona.groups.includes('legal-team') || persona.groups.includes('executives')) && level >= 4;
 
     if (isRestrictedQuery && !hasLegalAccess) {
@@ -302,9 +302,8 @@ export class EngineAdapter {
 
       for (const t of tokens) {
         const escapedToken = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        // Word boundary match (\btoken\b) or prefix match for long tokens (length >= 4)
         const wordRegex = new RegExp(`\\b${escapedToken}\\b`, 'i');
-        const prefixRegex = t.length >= 4 ? new RegExp(`\\b${escapedToken}\\w*\\b`, 'i') : wordRegex;
+        const prefixRegex = t.length >= 3 ? new RegExp(`\\b${escapedToken}\\w*\\b`, 'i') : wordRegex;
 
         if (prefixRegex.test(fullText)) {
           matches++;
@@ -329,14 +328,14 @@ export class EngineAdapter {
         };
       }
 
-      const sparseScore = matches / tokens.length;
+      const sparseScore = matches / Math.max(1, tokens.length);
       const isValidMatch = matches >= 1;
-      const denseScore = isValidMatch ? Math.min(1.0, 0.55 + sparseScore * 0.40) : sparseScore * 0.20;
+      const denseScore = isValidMatch ? Math.min(1.0, 0.65 + sparseScore * 0.35) : sparseScore * 0.20;
       const rrfScore = isValidMatch ? 0.85 : 0.10;
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
       const finalScore = isValidMatch
-        ? Number(Math.min(0.98, (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay).toFixed(3))
+        ? Number(Math.min(0.98, Math.max(0.70, (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay)).toFixed(3))
         : Number((sparseScore * 0.10).toFixed(3));
 
       return {
@@ -356,7 +355,7 @@ export class EngineAdapter {
       };
     }).sort((a, b) => b.finalScore - a.finalScore);
 
-    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
+    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.35).slice(0, 3);
 
     let answerText = '';
     let confidenceScore = 0.85;
@@ -425,7 +424,7 @@ export class EngineAdapter {
 
     // Call local Llama.cpp CUDA Server (port 8085) or Backend API (port 8080) for real LLM synthesis
     try {
-      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
+      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.35).slice(0, 3);
       
       let systemPrompt = '';
       let userPrompt = '';
