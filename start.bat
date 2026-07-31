@@ -1,5 +1,5 @@
 @echo off
-title EKRS AI -- Full Enterprise Platform Launcher (Gemma-4-E4B CUDA + Backend + Frontend)
+title EKRS AI -- Full Enterprise Platform Launcher (Qwen-3.5-9B CUDA + Backend + Frontend)
 cd /d "%~dp0"
 
 cls
@@ -21,7 +21,7 @@ if %errorlevel% neq 0 (
 echo [OK] Node.js Runtime detected.
 
 :: 2. Ensure model is present (auto-download or prepare if missing)
-echo [*] Verifying optimal model for RTX 5050 GPU (Gemma 4 E4B IT)...
+echo [*] Verifying optimal model for RTX 5050 GPU (Qwen3.5-9B IT)...
 python scripts\ensure_model.py
 if %errorlevel% neq 0 (
     echo [!] Warning: Model preparation script encountered an issue. Proceeding with fallback.
@@ -42,15 +42,15 @@ echo [OK] Environment verified.
 echo -------------------------------------------------------------------------
 echo.
 
-:: 4. Launch Llama.cpp CUDA Server hosting Gemma 4 E4B IT Model on Port 8085
-echo [1/3] Launching Llama.cpp CUDA Server (Port 8085 -- Gemma 4 E4B IT)...
+:: 4. Launch Llama.cpp CUDA Server hosting Qwen 3.5 9B IT Model on Port 8085
+echo [1/3] Launching Llama.cpp CUDA Server (Port 8085 -- Qwen 3.5 9B IT)...
 set "LLAMA_EXE=C:\Users\Parth\Desktop\whisper\third_party\llama-cpp-bin\llama-server.exe"
-set "MODEL_PATH=models\gemma-4-E4B-it.gguf"
+set "MODEL_PATH=models\qwen-3.5-9b-it.gguf"
 
 if exist "%LLAMA_EXE%" (
     if exist "%MODEL_PATH%" (
         echo     [+] Offloading 100 percent model layers to RTX 5050 CUDA GPU VRAM...
-        start "EKRS Llama.cpp CUDA (Gemma-4-E4B)" cmd /k ""%LLAMA_EXE%" -m "%MODEL_PATH%" -c 4096 --port 8085 -ngl 99"
+        start "EKRS Llama.cpp CUDA (Qwen-3.5-9B)" cmd /k ""%LLAMA_EXE%" -m "%MODEL_PATH%" -c 4096 --port 8085 -ngl 99"
         echo     [OK] Llama.cpp CUDA Server launched on Port 8085.
     ) else (
         echo     [!] %MODEL_PATH% not found. Launching with built-in Fallback engine.
@@ -69,7 +69,7 @@ echo [3/3] Launching EKRS Vite Frontend UI (Port 3000)...
 echo.
 echo =========================================================================
 echo   [!] All 3 Services Initialized:
-echo       1. Llama.cpp CUDA Server (Port 8085 -- Gemma-4-E4B 100 percent VRAM Offload)
+echo       1. Llama.cpp CUDA Server (Port 8085 -- Qwen-3.5-9B 100 percent VRAM Offload)
 echo       2. Node.js Backend API  (Port 8080 -- Zero-Trust Retrieval Engine)
 echo       3. Vite Frontend UI     (Port 3000 -- User Workspace)
 echo.

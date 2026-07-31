@@ -207,7 +207,7 @@ export class EngineAdapter {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `Hello ${persona.name}! I am your EKRS Zero-Trust Enterprise Knowledge Assistant running with CUDA GPU acceleration (Gemma 4 E4B IT). I operate under your clearance Level ${level} (${persona.role}).\n\nI can help you search and retrieve answers from connected enterprise documentation including:\n• API Gateway Architecture & Token Bucket Rate Limits\n• Blue-Green Production Deployment & Incident Protocols\n• Engineering Onboarding & Tooling Guidelines\n• Customer Data Processing Agreements (DPA - Restricted)\n• Password Reset & MFA Setup Instructions\n• Subscription Plans & Billing FAQ`,
+        answerText: `Hello ${persona.name}! I am your EKRS Zero-Trust Enterprise Knowledge Assistant running with CUDA GPU acceleration (Qwen 3.5 9B IT). I operate under your clearance Level ${level} (${persona.role}).\n\nI can help you search and retrieve answers from connected enterprise documentation including:\n• API Gateway Architecture & Token Bucket Rate Limits\n• Blue-Green Production Deployment & Incident Protocols\n• Engineering Onboarding & Tooling Guidelines\n• Customer Data Processing Agreements (DPA - Restricted)\n• Password Reset & MFA Setup Instructions\n• Subscription Plans & Billing FAQ`,
         confidenceScore: 0.95,
         isAbstained: false,
         citations: [],

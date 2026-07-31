@@ -4,38 +4,51 @@ import shutil
 import urllib.request
 
 MODEL_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'models')
-MODEL_FILE = os.path.join(MODEL_DIR, 'gemma-4-E4B-it.gguf')
+MODEL_FILE = os.path.join(MODEL_DIR, 'qwen-3.5-9b-it.gguf')
 
-# Primary HF Direct Download URL
-HF_DOWNLOAD_URL = "https://huggingface.co/unsloth/gemma-4-E4B-it-GGUF/resolve/main/gemma-4-E4B-it-UD-Q4_K_XL.gguf"
+# HuggingFace Direct Download URL for Qwen GGUF Model
+HF_DOWNLOAD_URL = "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m.gguf"
 
-# Local HF Cache fallback source
-HF_CACHE_BLOB = r"C:\Users\Parth\.cache\huggingface\hub\models--unsloth--gemma-4-E4B-it-GGUF\blobs\30d1e7949597a3446726064e80b876fd1b5cba4aa6eec53d27afa420e731fb36"
+# Local HF Cache fallback check
+HF_CACHE_DIR = r"C:\Users\Parth\.cache\huggingface\hub"
+
+def find_local_qwen_cache():
+    if not os.path.exists(HF_CACHE_DIR):
+        return None
+    for root, dirs, files in os.walk(HF_CACHE_DIR):
+        for f in files:
+            if ('qwen' in f.lower() or 'qwen' in root.lower()) and f.endswith('.gguf'):
+                full_path = os.path.join(root, f)
+                if os.path.getsize(full_path) > 500 * 1024 * 1024:
+                    return full_path
+    return None
 
 def ensure_model():
     os.makedirs(MODEL_DIR, exist_ok=True)
 
-    if os.path.exists(MODEL_FILE) and os.path.getsize(MODEL_FILE) > 100 * 1024 * 1024:
+    # 1. Check if target model already exists in models/
+    if os.path.exists(MODEL_FILE) and os.path.getsize(MODEL_FILE) > 500 * 1024 * 1024:
         size_gb = round(os.path.getsize(MODEL_FILE) / (1024 ** 3), 2)
         print(f"[OK] Model verified: {MODEL_FILE} ({size_gb} GB)")
         return True
 
     print("\n" + "=" * 70)
-    print("  [+] Setting up optimal model for RTX 5050 (Gemma 4 E4B IT -- 4.88GB)")
+    print("  [+] Setting up optimal Qwen Model for RTX 5050 GPU (Qwen3.5/2.5-9B IT GGUF)")
     print("=" * 70)
 
-    # 1. Try local HF cache copy first (Instant)
-    if os.path.exists(HF_CACHE_BLOB) and os.path.getsize(HF_CACHE_BLOB) > 100 * 1024 * 1024:
+    # 2. Check local HuggingFace cache first
+    local_cache = find_local_qwen_cache()
+    if local_cache:
         print(f"[*] Copying from local HuggingFace cache to {MODEL_FILE}...")
-        shutil.copyfile(HF_CACHE_BLOB, MODEL_FILE)
+        shutil.copyfile(local_cache, MODEL_FILE)
         size_gb = round(os.path.getsize(MODEL_FILE) / (1024 ** 3), 2)
         print(f"[OK] Model successfully prepared: {MODEL_FILE} ({size_gb} GB)\n")
         return True
 
-    # 2. Download directly from HuggingFace if not local
-    print(f"[*] Downloading Gemma 4 E4B IT GGUF from HuggingFace...")
+    # 3. Download directly from HuggingFace if not present
+    print(f"[*] Downloading Qwen3.5-9B / Qwen2.5-7B IT GGUF from HuggingFace...")
     print(f"    URL: {HF_DOWNLOAD_URL}")
-    print("    This is a one-time download (~4.88 GB). Please wait...")
+    print("    This is a one-time download (~4.68 GB). Please wait...")
 
     def progress_bar(block_num, block_size, total_size):
         downloaded = block_num * block_size
