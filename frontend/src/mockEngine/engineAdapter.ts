@@ -109,9 +109,7 @@ const STOP_WORDS = new Set([
   'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor',
   'not', 'only', 'own', 'same', 'so', 'than', 'too', 'very', 's', 't', 'can', 'will', 'just',
   'don', 'should', 'now', 'tell', 'me', 'bit', 'your', 'you', 'my', 'i', 'we', 'our', 'us',
-  'please', 'could', 'would', 'user', 'users', 'time', 'current', 'recommend', 'reccomend',
-  'simplify', 'simlify', 'cluttered', 'clutered', 'dashboard', 'way', 'how', 'would', 'should',
-  'could', 'get', 'set', 'make', 'use', 'using', 'used', 'also', 'now', 'like', 'want', 'need'
+  'please', 'could', 'would'
 ]);
 
 export class EngineAdapter {
@@ -200,7 +198,13 @@ export class EngineAdapter {
     const isGreeting = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'good morning', 'good afternoon'].some(g => queryLower === g || queryLower.startsWith(g + ' '));
     const isCapabilityQuery = queryLower.includes('capabilities') || queryLower.includes('what can you do') || queryLower.includes('what do you do') || queryLower.includes('help me') || queryLower.includes('how to use');
     const isDesignQuery = queryLower.includes('dashboard') || queryLower.includes('cluttered') || queryLower.includes('simplify') || queryLower.includes('recommend');
-    const isDefinitionQuery = queryLower.startsWith('what is') || queryLower.startsWith('what are') || queryLower.startsWith('define') || queryLower.startsWith('explain');
+    const isGeneralQuery = isDesignQuery ||
+      queryLower.startsWith('what is') || queryLower.startsWith('what are') ||
+      queryLower.startsWith('define') || queryLower.startsWith('explain') ||
+      queryLower.startsWith('how to') || queryLower.startsWith('how do') ||
+      queryLower.startsWith('how can') || queryLower.startsWith('tell me') ||
+      queryLower.startsWith('can you') || queryLower.startsWith('why') ||
+      queryLower.startsWith('describe');
 
     if (isGreeting || isCapabilityQuery) {
       const latencyMs = Number((performance.now() - start + 15).toFixed(1));
@@ -240,7 +244,7 @@ export class EngineAdapter {
     });
 
     // Check for restricted queries (e.g. DPA, Legal agreements)
-    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing');
+    const isRestrictedQuery = queryLower.includes('dpa') || queryLower.includes('data processing agreement');
     const hasLegalAccess = (persona.groups.includes('legal-team') || persona.groups.includes('executives')) && level >= 4;
 
     if (isRestrictedQuery && !hasLegalAccess) {
@@ -271,7 +275,7 @@ export class EngineAdapter {
       };
     }
 
-    // 2. Score Candidates with Word-Boundary Token Matching & Strict Relevance Thresholding
+    // 2. Score Candidates with Word-Boundary Token & Stem Matching
     const tokens = queryLower
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
@@ -279,11 +283,15 @@ export class EngineAdapter {
 
     const candidateScores = this.docs.map(doc => {
       let matches = 0;
+      const fullText = (doc.title + ' ' + doc.content).toLowerCase();
+
       for (const t of tokens) {
-        // Enforce exact word boundary matching (\btoken\b) to prevent partial substring matches (e.g. 'nli' matching 'unlimited')
         const escapedToken = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Word boundary match (\btoken\b) or prefix match for long tokens (length >= 4)
         const wordRegex = new RegExp(`\\b${escapedToken}\\b`, 'i');
-        if (wordRegex.test(doc.content) || wordRegex.test(doc.title)) {
+        const prefixRegex = t.length >= 4 ? new RegExp(`\\b${escapedToken}\\w*\\b`, 'i') : wordRegex;
+
+        if (prefixRegex.test(fullText)) {
           matches++;
         }
       }
@@ -307,9 +315,8 @@ export class EngineAdapter {
       }
 
       const sparseScore = matches / tokens.length;
-      // Require at least 2 matching terms OR sparseScore >= 0.50 to avoid single weak-word false positives
-      const isValidMatch = matches >= 2 || sparseScore >= 0.50;
-      const denseScore = isValidMatch ? Math.min(1.0, 0.50 + sparseScore * 0.45) : sparseScore * 0.20;
+      const isValidMatch = matches >= 1;
+      const denseScore = isValidMatch ? Math.min(1.0, 0.55 + sparseScore * 0.40) : sparseScore * 0.20;
       const rrfScore = isValidMatch ? 0.85 : 0.10;
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
@@ -334,7 +341,7 @@ export class EngineAdapter {
       };
     }).sort((a, b) => b.finalScore - a.finalScore);
 
-    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.48).slice(0, 3);
+    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
 
     let answerText = '';
     let confidenceScore = 0.85;
@@ -348,11 +355,11 @@ export class EngineAdapter {
       answerText = `To simplify the dashboard layout for users, we recommend the following UX optimizations:\n\n1. **Categorized Bento Layout**: Group metrics into clean, single-purpose cards with clear visual hierarchy.\n2. **Collapsible Technical Panes**: Keep raw audit traces and claims details collapsed by default.\n3. **Quick Action Chips**: Replace verbose text prompts with one-click quick action chips.\n4. **Progressive Disclosure**: Show high-level status badges (NLI Grounded, Latency) upfront, allowing users to expand full details on demand.`;
       confidenceScore = 0.88;
       isAbstained = false;
-    } else if (isDefinitionQuery) {
+    } else if (isGeneralQuery) {
       if (queryLower.includes('nlp') || queryLower.includes('nli')) {
         answerText = `**NLP (Natural Language Processing)** is a branch of artificial intelligence focused on helping computers understand, interpret, and generate human language.\n\n**NLI (Natural Language Inference)** is a fundamental task in NLP that evaluates whether a hypothesis statement logically follows from (entails), contradicts, or is neutral toward a given premise text.\n\n*(Note: This is a general technical definition. No specific internal enterprise document was found matching this topic in Confluence or Google Drive.)*`;
       } else {
-        answerText = `Here is a general technical overview for "${queryTrimmed}":\n\nThis term refers to standard software concepts. No specific internal enterprise document was found matching this topic in your connected knowledge bases.\n\n*(Note: Provided as general AI knowledge. Internal enterprise docs take priority when available.)*`;
+        answerText = `Here is a general technical overview for "${queryTrimmed}":\n\nThis query addresses standard software, AI, or system concepts. No specific internal enterprise document was found matching this exact query in your connected knowledge bases.\n\n*(Note: Answered using general AI knowledge. Connected enterprise documentation takes precedence when available.)*`;
       }
       confidenceScore = 0.82;
       isAbstained = false;
@@ -369,7 +376,7 @@ export class EngineAdapter {
       isVerified: true,
     }));
 
-    // Citations MUST strictly contain only verified document matches (empty [] when answering general definition queries)
+    // Citations MUST strictly contain only verified document matches (empty [] when answering general definition/concept queries)
     const citations = bestMatches.map((m, idx) => ({
       citationIndex: idx + 1,
       chunkId: m.chunkId,
@@ -403,7 +410,7 @@ export class EngineAdapter {
 
     // Call local Llama.cpp CUDA Server (port 8085) or Backend API (port 8080) for real LLM synthesis
     try {
-      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.48).slice(0, 3);
+      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
       
       let systemPrompt = '';
       let userPrompt = '';
@@ -413,7 +420,7 @@ export class EngineAdapter {
         systemPrompt = `You are EKRS Enterprise Knowledge Assistant running under user clearance Level ${persona.clearanceLevel || 2} (${persona.role}). Answer the user query strictly using the provided document context below. Cite sources using [Doc X].`;
         userPrompt = `Context:\n${topContext}\n\nQuestion: ${queryText.trim()}`;
       } else {
-        systemPrompt = `You are EKRS Enterprise Knowledge Assistant. If the user asks a general question or definition (e.g. "what is nlp and nli"), provide a helpful, concise definition without inventing fake internal enterprise documents or citations. State clearly at the end that no internal enterprise doc was found.`;
+        systemPrompt = `You are EKRS Enterprise Knowledge Assistant. If the user asks a general question, definition, or explanation (e.g. "what is nlp and nli", "how to write a python script"), provide a clear, helpful, concise answer. Do NOT invent fake internal enterprise documents or citations. Append a short note at the end: *(Note: Answered using general AI knowledge. No specific internal enterprise doc was found.)*`;
         userPrompt = `Question: ${queryText.trim()}`;
       }
 
@@ -435,8 +442,9 @@ export class EngineAdapter {
         const json: any = await response.json();
         if (json?.choices?.[0]?.message?.content) {
           syncResult.answerText = json.choices[0].message.content;
-          if (bestMatches.length > 0) {
+          if (bestMatches.length === 0) {
             syncResult.isAbstained = false;
+            syncResult.citations = [];
           }
         }
       }
