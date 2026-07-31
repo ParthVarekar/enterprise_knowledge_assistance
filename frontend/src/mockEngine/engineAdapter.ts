@@ -191,11 +191,26 @@ export class EngineAdapter {
   public static executeQuerySync(queryText: string, persona: UserPersona): QueryResult {
     const start = performance.now();
     const queryTrimmed = queryText.trim();
-    const queryLower = queryTrimmed.toLowerCase();
+    let rawQueryLower = queryTrimmed.toLowerCase();
     const level = persona.clearanceLevel || 2;
 
-    // Check for conversational greetings & system capability questions
-    const isGreeting = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'good morning', 'good afternoon'].some(g => queryLower === g || queryLower.startsWith(g + ' '));
+    // Strip leading conversational greetings if accompanied by actual questions
+    const greetingPrefixes = ['hi there', 'hello', 'hi', 'hey there', 'hey', 'good morning', 'good afternoon'];
+    let queryLower = rawQueryLower;
+
+    for (const g of greetingPrefixes) {
+      if (queryLower === g) break;
+      if (queryLower.startsWith(g + ' ') || queryLower.startsWith(g + ',') || queryLower.startsWith(g + '!')) {
+        const remaining = queryLower.substring(g.length + 1).trim();
+        if (remaining.length > 5) {
+          queryLower = remaining;
+        }
+        break;
+      }
+    }
+
+    // Pure standalone greeting check (ONLY if query is exclusively a greeting without a question)
+    const isStandaloneGreeting = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'good morning', 'good afternoon'].includes(queryLower);
     const isCapabilityQuery = queryLower.includes('capabilities') || queryLower.includes('what can you do') || queryLower.includes('what do you do') || queryLower.includes('help me') || queryLower.includes('how to use');
     const isDesignQuery = queryLower.includes('dashboard') || queryLower.includes('cluttered') || queryLower.includes('simplify') || queryLower.includes('recommend');
     const isGeneralQuery = isDesignQuery ||
@@ -206,7 +221,7 @@ export class EngineAdapter {
       queryLower.startsWith('can you') || queryLower.startsWith('why') ||
       queryLower.startsWith('describe');
 
-    if (isGreeting || isCapabilityQuery) {
+    if (isStandaloneGreeting || isCapabilityQuery) {
       const latencyMs = Number((performance.now() - start + 15).toFixed(1));
       return {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
@@ -253,7 +268,7 @@ export class EngineAdapter {
         queryId: `q_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         queryText: queryTrimmed,
         user: persona,
-        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current clearance is Level ${level}.`,
+        answerText: `I don't have enough verified permission to answer this question. The Customer Data Processing Agreement (DPA) policy exists under Restricted Classification (Level 4+ Clearance) and requires Legal/Executive group entitlement. Your current clearance as ${persona.role} is Level ${level}.`,
         confidenceScore: 0.12,
         isAbstained: true,
         abstentionReason: `Zero-Trust Role Restriction: User ${persona.name} (${persona.role}) operates at Level ${level} and lacks required 'legal-team' or 'executives' entitlement.`,
