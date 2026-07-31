@@ -1,13 +1,18 @@
 import { DocumentChunk, UserEntitlements } from '../types';
 import { ACLEvaluator } from '../security/acl';
+import { IVectorStore } from './interfaces';
 
 export interface VectorSearchResult {
   chunk: DocumentChunk;
   similarityScore: number;
 }
 
-export class VectorStore {
+export class VectorStore implements IVectorStore {
   private chunks: DocumentChunk[] = [];
+
+  public async upsert(chunks: DocumentChunk[]): Promise<void> {
+    this.upsertChunks(chunks);
+  }
 
   public upsertChunks(chunks: DocumentChunk[]): void {
     const map = new Map(this.chunks.map(c => [c.chunk_id, c]));
@@ -18,16 +23,37 @@ export class VectorStore {
     this.chunks = Array.from(map.values());
   }
 
-  public search(queryText: string, queryVector: number[] | undefined, user: UserEntitlements, topK: number = 20): VectorSearchResult[] {
+  public async query(vector: number[], topK: number, filters?: Record<string, unknown>): Promise<{ chunk: DocumentChunk; similarityScore: number }[]> {
+    const results: VectorSearchResult[] = [];
+    for (const chunk of this.chunks) {
+      if (filters?.sourceSystem && chunk.source_system !== filters.sourceSystem) continue;
+      const cVec = chunk.vector || this.generateMockVector(chunk.content);
+      const similarity = this.cosineSimilarity(vector, cVec);
+      results.push({ chunk, similarityScore: similarity });
+    }
+    return results.sort((a, b) => b.similarityScore - a.similarityScore).slice(0, topK);
+  }
+
+  public search(queryText: string, queryVector?: number[], user?: UserEntitlements, topK: number = 20): VectorSearchResult[] {
     const qVec = queryVector || this.generateMockVector(queryText);
     const results: VectorSearchResult[] = [];
     for (const chunk of this.chunks) {
-      if (!ACLEvaluator.evaluate(user, chunk.acl)) continue;
+      if (user && !ACLEvaluator.evaluate(user, chunk.acl)) continue;
       const cVec = chunk.vector || this.generateMockVector(chunk.content);
       const similarity = this.cosineSimilarity(qVec, cVec);
       results.push({ chunk, similarityScore: similarity });
     }
     return results.sort((a, b) => b.similarityScore - a.similarityScore).slice(0, topK);
+  }
+
+  public async deleteBySource(sourceSystem: string): Promise<number> {
+    const initialCount = this.chunks.length;
+    this.chunks = this.chunks.filter(c => c.source_system !== sourceSystem);
+    return initialCount - this.chunks.length;
+  }
+
+  public count(): number {
+    return this.chunks.length;
   }
 
   private cosineSimilarity(a: number[], b: number[]): number {

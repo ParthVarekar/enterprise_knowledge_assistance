@@ -1,11 +1,12 @@
 import { DocumentChunk } from '../types';
+import { ISparseSearch } from './interfaces';
 
 export interface BM25SearchResult {
   chunk: DocumentChunk;
   score: number;
 }
 
-export class SparseSearchEngine {
+export class SparseSearchEngine implements ISparseSearch {
   private chunks: DocumentChunk[] = [];
   private k1: number = 1.2;
   private b: number = 0.75;
@@ -13,6 +14,12 @@ export class SparseSearchEngine {
   private docLengths: Map<string, number> = new Map();
   private docTermFreqs: Map<string, Map<string, number>> = new Map();
   private docFreqs: Map<string, number> = new Map();
+
+  public indexDocument(chunk: DocumentChunk): void {
+    const existing = this.chunks.filter(c => c.chunk_id !== chunk.chunk_id);
+    existing.push(chunk);
+    this.indexDocuments(existing);
+  }
 
   public indexDocuments(chunks: DocumentChunk[]): void {
     this.chunks = chunks;
@@ -49,7 +56,7 @@ export class SparseSearchEngine {
         let matchedTf = 0;
         let matchedDf = 0;
         for (const [docToken, tf] of termFreqs.entries()) {
-          if (docToken === token || docToken.startsWith(token) || token.startsWith(docToken)) {
+          if (docToken === token) {
             matchedTf += tf;
             matchedDf = Math.max(matchedDf, this.docFreqs.get(docToken) || 0);
           }
@@ -66,6 +73,19 @@ export class SparseSearchEngine {
     const sorted = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]).slice(0, topK);
     const chunkMap = new Map(this.chunks.map(c => [c.chunk_id, c]));
     return sorted.map(([chunkId, score]) => ({ chunk: chunkMap.get(chunkId)!, score }));
+  }
+
+  public deleteBySource(sourceSystem: string): void {
+    this.chunks = this.chunks.filter(c => c.source_system !== sourceSystem);
+    this.indexDocuments(this.chunks);
+  }
+
+  public clear(): void {
+    this.chunks = [];
+    this.docLengths.clear();
+    this.docTermFreqs.clear();
+    this.docFreqs.clear();
+    this.avgDocLength = 0;
   }
 
   private tokenize(text: string): string[] {

@@ -1,10 +1,27 @@
-export type AuditAction = 'query' | 'acl_deny' | 'retrieval' | 'grounding' | 'answer_generation' | 'answer_served' | 'answer_abstained' | 'mutation_test' | 'invariant_check' | 'fuzz_test';
+export type AuditAction = 
+  | 'query' 
+  | 'acl_deny' 
+  | 'retrieval' 
+  | 'grounding' 
+  | 'answer_generation' 
+  | 'answer_served' 
+  | 'answer_abstained' 
+  | 'mutation_test' 
+  | 'invariant_check' 
+  | 'fuzz_test'
+  | 'dlp_sanitized'
+  | 'mcp_tool_execution';
 
 export interface AuditRecord {
   timestamp: string;
   action: AuditAction;
   actor: string;
   tenant_id: string;
+  query_id?: string;
+  matched_document_ids?: string[];
+  live_gate_passed?: boolean;
+  llm_token_count?: number;
+  latency_ms?: number;
   details: Record<string, unknown>;
   trace_id?: string;
 }

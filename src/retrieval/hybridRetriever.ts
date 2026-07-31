@@ -1,6 +1,5 @@
 import { DocumentChunk, RetrievalQuery, ScoredCandidate } from '../types';
-import { SparseSearchEngine } from './sparseSearch';
-import { VectorStore } from './vectorStore';
+import { ISparseSearch, IVectorStore } from './interfaces';
 import { LivePermissionGate } from '../security/livePermissionGate';
 
 export interface HybridRetrieverOptions {
@@ -10,11 +9,11 @@ export interface HybridRetrieverOptions {
 }
 
 export class HybridRetriever {
-  private sparseSearch: SparseSearchEngine;
-  private vectorStore: VectorStore;
+  private sparseSearch: ISparseSearch;
+  private vectorStore: IVectorStore;
   private permissionGate: LivePermissionGate;
 
-  constructor(sparseSearch: SparseSearchEngine, vectorStore: VectorStore, permissionGate: LivePermissionGate) {
+  constructor(sparseSearch: ISparseSearch, vectorStore: IVectorStore, permissionGate: LivePermissionGate) {
     this.sparseSearch = sparseSearch;
     this.vectorStore = vectorStore;
     this.permissionGate = permissionGate;
@@ -26,7 +25,7 @@ export class HybridRetriever {
     const candidateLimit = options.topKCandidates ?? 20;
 
     const sparseResults = this.sparseSearch.search(query.raw_text, 50);
-    const vectorResults = this.vectorStore.search(query.raw_text, undefined, query.user_entitlements, 50);
+    const vectorResults = this.vectorStore.search(query.raw_text, undefined, undefined, 50);
 
     const candidateMap = new Map<string, { chunk: DocumentChunk; sparseRank?: number; denseRank?: number; sparseScore: number; denseScore: number; }>();
 
@@ -49,6 +48,9 @@ export class HybridRetriever {
     const maxPossibleRRF = 2 / (rrfK + 1);
 
     for (const item of candidateMap.values()) {
+      // Require genuine relevance: sparse term matches > 0 OR dense score >= 0.65
+      if (item.sparseScore === 0 && item.denseScore < 0.65) continue;
+
       const rrfSparse = item.sparseRank ? 1 / (rrfK + item.sparseRank) : 0;
       const rrfDense = item.denseRank ? 1 / (rrfK + item.denseRank) : 0;
       const rawRRF = rrfSparse + rrfDense;
@@ -73,6 +75,8 @@ export class HybridRetriever {
     scoredCandidates.sort((a, b) => b.final_score - a.final_score);
     const topCandidates = scoredCandidates.slice(0, candidateLimit * 2);
     const chunksToVerify = topCandidates.map(c => c.chunk);
+
+    // Live Permission Gate runs verification and logs ACL denials
     const verifiedChunks = await this.permissionGate.verifyCandidates(chunksToVerify, query.user_entitlements);
     const verifiedChunkIds = new Set(verifiedChunks.map(c => c.chunk_id));
 

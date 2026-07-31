@@ -12,7 +12,8 @@ import {
   RotateCw, 
   FileText, 
   ShieldAlert, 
-  Users
+  Users,
+  Activity
 } from 'lucide-react';
 
 interface ConnectorSource {
@@ -35,7 +36,7 @@ const CONNECTOR_SOURCES: ConnectorSource[] = [
   {
     id: 'conn-confluence',
     name: 'Confluence Wiki',
-    system: 'confluence_cloud',
+    system: 'confluence',
     status: 'Connected',
     chunks: 14250,
     documents: 342,
@@ -65,7 +66,7 @@ const CONNECTOR_SOURCES: ConnectorSource[] = [
   {
     id: 'conn-zendesk',
     name: 'Zendesk Help Center',
-    system: 'zendesk_kb',
+    system: 'zendesk',
     status: 'Connected',
     chunks: 8400,
     documents: 185,
@@ -80,7 +81,7 @@ const CONNECTOR_SOURCES: ConnectorSource[] = [
   {
     id: 'conn-slack',
     name: 'Slack Canvas & Markdown Docs',
-    system: 'slack_workspace',
+    system: 'slack',
     status: 'Connected',
     chunks: 5120,
     documents: 94,
@@ -94,8 +95,24 @@ const CONNECTOR_SOURCES: ConnectorSource[] = [
   },
 ];
 
+interface WebhookLog {
+  id: string;
+  connector: string;
+  event: string;
+  timestamp: string;
+  status: '200 OK' | '202 ACK';
+}
+
+const INITIAL_WEBHOOK_LOGS: WebhookLog[] = [
+  { id: 'evt_901', connector: 'google_drive', event: 'file.updated (GDRIVE-001)', timestamp: '11:38:12', status: '200 OK' },
+  { id: 'evt_902', connector: 'slack', event: 'canvas.shared (#eng-architecture)', timestamp: '11:35:40', status: '200 OK' },
+  { id: 'evt_903', connector: 'confluence', event: 'page.published (CONF-001)', timestamp: '11:32:05', status: '200 OK' },
+  { id: 'evt_904', connector: 'zendesk', event: 'article.created (ZD-002)', timestamp: '11:28:19', status: '200 OK' },
+];
+
 export const ConnectorsView: React.FC = () => {
   const [connectors, setConnectors] = useState<ConnectorSource[]>(CONNECTOR_SOURCES);
+  const [webhookLogs] = useState<WebhookLog[]>(INITIAL_WEBHOOK_LOGS);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClassification, setSelectedClassification] = useState<string>('all');
   const [syncingId, setSyncingId] = useState<string | null>(null);
@@ -202,9 +219,8 @@ export const ConnectorsView: React.FC = () => {
           </div>
         </div>
 
-        {/* Header Stats Bento Grid (4-Column Layout Spec) */}
+        {/* Header Stats Bento Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Stat 1: Total Ingested Chunks */}
           <div className="notion-card p-5 space-y-1">
             <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
               <span>Total Ingested Chunks</span>
@@ -216,7 +232,6 @@ export const ConnectorsView: React.FC = () => {
             <p className="text-[11px] text-[#787774] font-medium">Indexed in vector embedding database</p>
           </div>
 
-          {/* Stat 2: Total Index Documents */}
           <div className="notion-card p-5 space-y-1">
             <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
               <span>Total Index Documents</span>
@@ -228,7 +243,6 @@ export const ConnectorsView: React.FC = () => {
             <p className="text-[11px] text-[#787774] font-medium">Unique source documents processed</p>
           </div>
 
-          {/* Stat 3: Connector Health */}
           <div className="notion-card p-5 space-y-1">
             <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
               <span>Connector Health</span>
@@ -240,7 +254,6 @@ export const ConnectorsView: React.FC = () => {
             <p className="text-[11px] font-mono text-[#00A884] font-bold">100% Operational</p>
           </div>
 
-          {/* Stat 4: ACL Invariant Status */}
           <div className="notion-card p-5 space-y-1">
             <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
               <span>ACL Invariant Status</span>
@@ -267,7 +280,6 @@ export const ConnectorsView: React.FC = () => {
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E9E8E4] pb-4">
-        {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <Search className="w-4 h-4 text-[#787774] absolute left-3.5 top-3" />
           <input
@@ -279,7 +291,6 @@ export const ConnectorsView: React.FC = () => {
           />
         </div>
 
-        {/* Security Classification Pill Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           <span className="text-xs font-mono text-[#787774] font-semibold mr-1">Classification:</span>
           {[
@@ -313,7 +324,6 @@ export const ConnectorsView: React.FC = () => {
               key={c.id}
               className="notion-card-interactive p-6 space-y-4 group"
             >
-              {/* Card Top Row: Header & Status */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center space-x-3.5">
                   <div className="w-12 h-12 rounded-xl bg-[#F7F6F3] border border-[#E9E8E4] flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
@@ -338,12 +348,10 @@ export const ConnectorsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Description */}
               <p className="text-xs text-[#37352F] leading-relaxed font-medium">
                 {c.description}
               </p>
 
-              {/* Key Metrics */}
               <div className="p-4 rounded-xl bg-[#F7F6F3] border border-[#E9E8E4] space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-[#787774] flex items-center gap-1.5">
@@ -355,7 +363,6 @@ export const ConnectorsView: React.FC = () => {
                   </span>
                 </div>
 
-                {/* Security Classification Tag */}
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-[#787774] font-mono flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-[#2383E2]" />
@@ -368,7 +375,6 @@ export const ConnectorsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* ACL Group Entitlements Pill Mapping */}
               <div className="space-y-1.5 text-xs">
                 <div className="text-[11px] font-mono text-[#787774] flex items-center gap-1">
                   <Lock className="w-3 h-3 text-[#D97706]" />
@@ -383,7 +389,6 @@ export const ConnectorsView: React.FC = () => {
                 </div>
               </div>
 
-              {/* Card Footer Actions: Actionable Re-Ingest Micro Button */}
               <div className="pt-3 border-t border-[#E9E8E4] flex items-center justify-between text-xs">
                 <span className="text-[11px] font-mono text-[#787774] flex items-center gap-1">
                   <span>Last synced:</span>
@@ -406,6 +411,49 @@ export const ConnectorsView: React.FC = () => {
             </div>
           );
         })}
+      </div>
+
+      {/* Real-time Webhook Stream Card */}
+      <div className="notion-card p-6 space-y-4">
+        <div className="flex items-center justify-between border-b border-[#E9E8E4] pb-3">
+          <div className="flex items-center space-x-2">
+            <Activity className="w-5 h-5 text-[#2383E2]" />
+            <h3 className="text-sm font-bold text-[#000000]">Live Webhook Ingestion Log Stream</h3>
+          </div>
+          <span className="text-[11px] font-mono text-[#00A884] font-bold flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-[#00A884] animate-pulse"></span>
+            Listening on /api/v1/webhooks/:connectorId
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs font-mono">
+            <thead>
+              <tr className="border-b border-[#E9E8E4] bg-[#F7F6F3] text-[#787774] uppercase text-[10px] font-bold">
+                <th className="py-2.5 px-3">Event ID</th>
+                <th className="py-2.5 px-3">Connector</th>
+                <th className="py-2.5 px-3">Webhook Event</th>
+                <th className="py-2.5 px-3">Time</th>
+                <th className="py-2.5 px-3 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#E9E8E4]">
+              {webhookLogs.map(log => (
+                <tr key={log.id} className="hover:bg-[#F7F6F3]/80 transition-colors">
+                  <td className="py-2.5 px-3 font-bold text-[#2383E2]">{log.id}</td>
+                  <td className="py-2.5 px-3 font-bold text-[#000000]">{log.connector}</td>
+                  <td className="py-2.5 px-3 text-[#37352F]">{log.event}</td>
+                  <td className="py-2.5 px-3 text-[#787774]">{log.timestamp}</td>
+                  <td className="py-2.5 px-3 text-right">
+                    <span className="px-2 py-0.5 rounded-md badge-emerald text-[10px] font-bold">
+                      {log.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
