@@ -4,106 +4,127 @@
 
 :root {
   color-scheme: light;
-  --bg-canvas: #F8FAFC;
+  --bg-canvas: #FBFBFA;
   --bg-surface: #FFFFFF;
-  --border-subtle: rgba(226, 232, 240, 0.9);
-  --border-tactile: rgba(15, 23, 42, 0.08);
-  --text-primary: #0F172A;
-  --text-secondary: #64748B;
-  --accent-indigo: #4F46E5;
-  --accent-blue: #2563EB;
+  --bg-bento: #F7F6F3;
+  --border-notion: #E9E8E4;
+  --text-main: #37352F;
+  --text-muted: #787774;
+  --notion-blue: #2383E2;
 }
 
 body {
   min-height: 100vh;
-  background-color: #F8FAFC;
-  background-image: radial-gradient(#e2e8f0 1.2px, transparent 1.2px);
-  background-size: 24px 24px;
-  color: #0F172A;
-  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #FBFBFA;
+  color: #37352F;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Linear & Raycast Light Surface Utilities */
-.light-card {
-  background-color: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
-  border-radius: 12px;
-}
-
-.light-card-interactive {
-  background-color: #FFFFFF;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 1px 2px -1px rgba(15, 23, 42, 0.02);
-  border-radius: 12px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.light-card-interactive:hover {
-  border-color: rgba(79, 70, 229, 0.4);
-  box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.03);
-  transform: translateY(-1px);
-}
-
-/* Raycast Light Command Bar Input */
-.raycast-command-bar {
-  background: #FFFFFF;
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
-  border-radius: 16px;
-}
-
-/* Telemetry Micro-Badges */
-.badge-emerald {
-  background-color: #ECFDF5;
-  color: #059669;
-  border: 1px solid #A7F3D0;
-}
-
-.badge-rose {
-  background-color: #FFF1F2;
-  color: #E11D48;
-  border: 1px solid #FECDD3;
-}
-
-.badge-amber {
-  background-color: #FEF3C7;
-  color: #D97706;
-  border: 1px solid #FDE68A;
-}
-
-.badge-indigo {
-  background-color: #EEF2FF;
-  color: #4F46E5;
-  border: 1px solid #C7D2FE;
-}
-
-/* Light Mode Keycap */
-.keycap {
-  background-color: #F1F5F9;
-  border: 1px solid #CBD5E1;
-  box-shadow: 0 1px 0 0 #94A3B8;
-  color: #475569;
-  font-family: 'JetBrains Mono', monospace;
-  border-radius: 4px;
-  font-size: 11px;
-  padding: 1px 5px;
-}
-
-/* Custom Scrollbar for Light Mode */
+/* Custom Scrollbar for Notion Style */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #F7F6F3;
 }
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #D9D8D5;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #A4A29E;
+}
+
+/* Notion Card Surface & Bento Utilities */
+.notion-card {
+  background-color: #FFFFFF;
+  border: 1px solid #E9E8E4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+}
+
+.notion-card-interactive {
+  background-color: #FFFFFF;
+  border: 1px solid #E9E8E4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border-radius: 16px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notion-card-interactive:hover {
+  border-color: #2383E2;
+  box-shadow: 0 8px 24px -4px rgba(35, 131, 226, 0.12);
+  transform: translateY(-1px);
+}
+
+.notion-bento {
+  background-color: #F7F6F3;
+  border: 1px solid #E9E8E4;
+  border-radius: 24px;
+}
+
+/* Keyboard Cap Badge */
+.keycap {
+  background-color: #F1F0EC;
+  border: 1px solid #D9D8D5;
+  box-shadow: 0 1px 0 0 #B5B3AD;
+  color: #787774;
+  font-family: 'Geist Mono', 'JetBrains Mono', monospace;
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 1px 6px;
+  font-weight: 600;
+}
+
+/* Notion Accent Block Containers */
+.notion-block-blue {
+  background-color: #EAF2FF;
+  border: 1px solid #D0E2FF;
+  border-radius: 24px;
+}
+
+.notion-block-coral {
+  background-color: #FFEFEF;
+  border: 1px solid #FFD0D0;
+  border-radius: 24px;
+}
+
+.notion-block-yellow {
+  background-color: #FFF8E7;
+  border: 1px solid #FFE9B8;
+  border-radius: 24px;
+}
+
+.notion-block-emerald {
+  background-color: #E6F8F3;
+  border: 1px solid #C1F0E4;
+  border-radius: 24px;
+}
+
+/* Micro Status Badges */
+.badge-emerald {
+  background-color: #E6F8F3;
+  color: #00A884;
+  border: 1px solid #9EE6D3;
+}
+
+.badge-rose {
+  background-color: #FFEFEF;
+  color: #E11D48;
+  border: 1px solid #FFC0C0;
+}
+
+.badge-amber {
+  background-color: #FFF8E7;
+  color: #D97706;
+  border: 1px solid #FDE68A;
+}
+
+.badge-blue {
+  background-color: #EAF2FF;
+  color: #2383E2;
+  border: 1px solid #BCE0FD;
 }

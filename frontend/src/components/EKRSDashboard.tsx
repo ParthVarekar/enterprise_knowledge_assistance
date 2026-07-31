@@ -13,7 +13,7 @@ export const EKRSDashboard: React.FC = () => {
   const { activeTab, setActiveTab, currentPersona, setCurrentPersona } = useEKRS();
 
   return (
-    <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900 antialiased selection:bg-[#4f46e5] selection:text-[#ffffff]">
+    <div className="flex min-h-screen bg-[#FBFBFA] font-sans text-[#37352F] antialiased selection:bg-[#2383E2] selection:text-white">
       {/* Navigation Sidebar */}
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
 

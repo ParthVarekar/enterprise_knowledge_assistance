@@ -12,8 +12,7 @@ import {
   RotateCw, 
   FileText, 
   ShieldAlert, 
-  Users,
-  Activity
+  Users
 } from 'lucide-react';
 
 interface ConnectorSource {
@@ -111,8 +110,8 @@ export const ConnectorsView: React.FC = () => {
     return matchesSearch && matchesClassification;
   });
 
-  const totalChunks = 56670; // High density Bento Spec metric
-  const totalDocs = 1231;   // High density Bento Spec metric
+  const totalChunks = 56670;
+  const totalDocs = 1231;
 
   const handleSyncConnector = (id: string, name: string) => {
     setSyncingId(id);
@@ -144,7 +143,7 @@ export const ConnectorsView: React.FC = () => {
       case 'confidential':
         return 'badge-amber font-bold';
       case 'internal':
-        return 'badge-indigo font-bold';
+        return 'badge-blue font-bold';
       case 'public':
         return 'badge-emerald font-bold';
     }
@@ -153,134 +152,136 @@ export const ConnectorsView: React.FC = () => {
   const getClassificationIcon = (type: ConnectorSource['classificationType']) => {
     switch (type) {
       case 'restricted':
-        return <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />;
+        return <ShieldAlert className="w-3.5 h-3.5 text-[#E11D48]" />;
       case 'confidential':
-        return <Lock className="w-3.5 h-3.5 text-amber-600" />;
+        return <Lock className="w-3.5 h-3.5 text-[#D97706]" />;
       case 'internal':
-        return <Users className="w-3.5 h-3.5 text-indigo-600" />;
+        return <Users className="w-3.5 h-3.5 text-[#2383E2]" />;
       case 'public':
-        return <Globe className="w-3.5 h-3.5 text-emerald-600" />;
+        return <Globe className="w-3.5 h-3.5 text-[#00A884]" />;
     }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
-      {/* Header Bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 light-card p-6 shadow-sm">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-600 shadow-2xs">
-              <Plug className="w-6 h-6" />
+      {/* Notion Emerald Hero Container */}
+      <div className="notion-block-emerald p-6 md:p-8 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <div className="p-2 rounded-xl bg-[#FFFFFF] border border-[#C1F0E4] text-[#00A884] shadow-2xs">
+                <Plug className="w-6 h-6" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-[#000000] tracking-tight flex items-center gap-2">
+                  <span>Knowledge Hub & Connectors</span>
+                  <span className="px-2.5 py-0.5 rounded-full badge-emerald text-xs font-mono font-bold">
+                    4 Operational Integrations
+                  </span>
+                </h1>
+                <p className="text-xs text-[#787774] mt-0.5 font-medium">
+                  Manage enterprise data sources, vector index volume, and security classification rules.
+                </p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
-                <span>Knowledge Hub & Connectors</span>
-                <span className="px-2.5 py-0.5 rounded-full badge-emerald text-xs font-mono font-bold">
-                  4 Operational Integrations
-                </span>
-              </h1>
-              <p className="text-xs text-slate-500 mt-0.5 font-medium">
-                Manage enterprise data sources, vector index volume, and security classification rules.
-              </p>
-            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleSyncAll}
+              disabled={isSyncingAll}
+              className="px-4 py-2 bg-[#2383E2] hover:bg-[#1D74CB] text-white text-xs font-mono font-bold rounded-lg flex items-center gap-2 shadow-xs transition-all disabled:opacity-50"
+            >
+              {isSyncingAll ? (
+                <RotateCw className="w-4 h-4 text-white animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 text-white" />
+              )}
+              <span>{isSyncingAll ? 'Re-Ingesting All Sources...' : 'Re-Ingest All Connectors'}</span>
+            </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={handleSyncAll}
-            disabled={isSyncingAll}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-mono font-bold rounded-lg flex items-center gap-2 shadow-sm transition-all disabled:opacity-50"
-          >
-            {isSyncingAll ? (
-              <RotateCw className="w-4 h-4 text-white animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4 text-white" />
-            )}
-            <span>{isSyncingAll ? 'Re-Ingesting All Sources...' : 'Re-Ingest All Connectors'}</span>
-          </button>
+        {/* Header Stats Bento Grid (4-Column Layout Spec) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Stat 1: Total Ingested Chunks */}
+          <div className="notion-card p-5 space-y-1">
+            <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
+              <span>Total Ingested Chunks</span>
+              <Layers className="w-4 h-4 text-[#2383E2]" />
+            </div>
+            <div className="text-3xl font-extrabold text-[#000000] font-mono">
+              {totalChunks.toLocaleString()}
+            </div>
+            <p className="text-[11px] text-[#787774] font-medium">Indexed in vector embedding database</p>
+          </div>
+
+          {/* Stat 2: Total Index Documents */}
+          <div className="notion-card p-5 space-y-1">
+            <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
+              <span>Total Index Documents</span>
+              <FileText className="w-4 h-4 text-[#2383E2]" />
+            </div>
+            <div className="text-3xl font-extrabold text-[#2383E2] font-mono">
+              {totalDocs.toLocaleString()}
+            </div>
+            <p className="text-[11px] text-[#787774] font-medium">Unique source documents processed</p>
+          </div>
+
+          {/* Stat 3: Connector Health */}
+          <div className="notion-card p-5 space-y-1">
+            <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
+              <span>Connector Health</span>
+              <ShieldCheck className="w-4 h-4 text-[#00A884]" />
+            </div>
+            <div className="text-3xl font-extrabold text-[#00A884] font-mono">
+              100%
+            </div>
+            <p className="text-[11px] font-mono text-[#00A884] font-bold">100% Operational</p>
+          </div>
+
+          {/* Stat 4: ACL Invariant Status */}
+          <div className="notion-card p-5 space-y-1">
+            <div className="text-xs font-mono text-[#787774] uppercase tracking-wider flex items-center justify-between font-semibold">
+              <span>ACL Invariant Status</span>
+              <Lock className="w-4 h-4 text-[#D97706]" />
+            </div>
+            <div className="text-3xl font-extrabold text-[#D97706] font-mono">
+              ENFORCED
+            </div>
+            <p className="text-[11px] text-[#787774] font-medium">UnifiedACL sync active on all sources</p>
+          </div>
         </div>
       </div>
 
       {/* Notification Toast */}
       {toastMessage && (
-        <div className="p-4 rounded-xl badge-emerald text-xs font-mono flex items-center justify-between shadow-sm">
+        <div className="p-4 rounded-xl badge-emerald text-xs font-mono flex items-center justify-between shadow-2xs">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <CheckCircle2 className="w-4 h-4 text-[#00A884]" />
             <span className="font-bold">{toastMessage}</span>
           </div>
           <span className="text-[10px] font-bold uppercase tracking-wider">ACKNOWLEDGED</span>
         </div>
       )}
 
-      {/* Header Stats Bento Grid (High-Density 4-Column Layout Spec) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Stat 1: Total Ingested Chunks */}
-        <div className="light-card p-5 space-y-1 bg-white border border-slate-200 shadow-sm">
-          <div className="text-xs font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
-            <span>Total Ingested Chunks</span>
-            <Layers className="w-4 h-4 text-indigo-600" />
-          </div>
-          <div className="text-3xl font-extrabold text-slate-900 font-mono">
-            {totalChunks.toLocaleString()}
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">Indexed in vector embedding database</p>
-        </div>
-
-        {/* Stat 2: Total Index Documents */}
-        <div className="light-card p-5 space-y-1 bg-white border border-slate-200 shadow-sm">
-          <div className="text-xs font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
-            <span>Total Index Documents</span>
-            <FileText className="w-4 h-4 text-blue-600" />
-          </div>
-          <div className="text-3xl font-extrabold text-blue-600 font-mono">
-            {totalDocs.toLocaleString()}
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">Unique source documents processed</p>
-        </div>
-
-        {/* Stat 3: Connector Health */}
-        <div className="light-card p-5 space-y-1 bg-white border border-slate-200 shadow-sm">
-          <div className="text-xs font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
-            <span>Connector Health</span>
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
-          </div>
-          <div className="text-3xl font-extrabold text-emerald-600 font-mono">
-            100%
-          </div>
-          <p className="text-[11px] font-mono text-emerald-700 font-bold">100% Operational</p>
-        </div>
-
-        {/* Stat 4: ACL Invariant Status */}
-        <div className="light-card p-5 space-y-1 bg-white border border-slate-200 shadow-sm">
-          <div className="text-xs font-mono text-slate-500 uppercase tracking-wider flex items-center justify-between font-semibold">
-            <span>ACL Invariant Status</span>
-            <Lock className="w-4 h-4 text-amber-600" />
-          </div>
-          <div className="text-3xl font-extrabold text-amber-600 font-mono">
-            ENFORCED
-          </div>
-          <p className="text-[11px] text-slate-500 font-medium">UnifiedACL sync active on all sources</p>
-        </div>
-      </div>
-
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#E9E8E4] pb-4">
         {/* Search Input */}
         <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-[#787774] absolute left-3.5 top-3" />
           <input
             type="text"
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             placeholder="Search connectors by name, ID, or description..."
-            className="w-full bg-white border border-slate-200 rounded-lg pl-10 pr-4 py-2 text-xs font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-2xs"
+            className="w-full bg-[#FFFFFF] border border-[#E9E8E4] rounded-xl pl-10 pr-4 py-2 text-xs font-mono text-[#37352F] focus:outline-none focus:ring-2 focus:ring-[#2383E2] shadow-2xs"
           />
         </div>
 
         {/* Security Classification Pill Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
-          <span className="text-xs font-mono text-slate-500 font-semibold mr-1">Classification:</span>
+          <span className="text-xs font-mono text-[#787774] font-semibold mr-1">Classification:</span>
           {[
             { label: 'All', value: 'all' },
             { label: 'Confidential', value: 'confidential' },
@@ -293,8 +294,8 @@ export const ConnectorsView: React.FC = () => {
               onClick={() => setSelectedClassification(tab.value)}
               className={`px-3 py-1 text-xs font-mono rounded-lg transition-all whitespace-nowrap ${
                 selectedClassification === tab.value
-                  ? 'bg-indigo-600 text-white font-bold shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                  ? 'bg-[#2383E2] text-white font-bold shadow-2xs'
+                  : 'bg-[#F1F0EC] text-[#37352F] hover:bg-[#E3E2E0] border border-[#D9D8D5]'
               }`}
             >
               {tab.label}
@@ -303,64 +304,64 @@ export const ConnectorsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Data Source Cards Grid (White Cards with Hover Elevation) */}
+      {/* Data Source Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {filteredConnectors.map(c => {
           const isCurrentlySyncing = syncingId === c.id || isSyncingAll;
           return (
             <div
               key={c.id}
-              className="bg-white p-6 rounded-xl border border-slate-200 space-y-4 shadow-sm hover:border-indigo-300 hover:shadow-md transition-all group"
+              className="notion-card-interactive p-6 space-y-4 group"
             >
               {/* Card Top Row: Header & Status */}
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center space-x-3.5">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
+                  <div className="w-12 h-12 rounded-xl bg-[#F7F6F3] border border-[#E9E8E4] flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform">
                     {renderCuteConnectorIcon(c.icon)}
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-base text-slate-900 tracking-tight">{c.name}</h3>
-                    <div className="text-xs font-mono text-indigo-600 font-semibold flex items-center gap-1.5">
+                    <h3 className="font-bold text-base text-[#000000] tracking-tight">{c.name}</h3>
+                    <div className="text-xs font-mono text-[#2383E2] font-semibold flex items-center gap-1.5">
                       <span>{c.system}</span>
-                      <span className="text-slate-300">•</span>
-                      <span className="text-slate-500 text-[11px]">{c.documents} documents</span>
+                      <span className="text-[#787774]">•</span>
+                      <span className="text-[#787774] text-[11px]">{c.documents} documents</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col items-end gap-1.5">
                   <span className="px-2.5 py-1 rounded-full badge-emerald text-xs font-mono font-bold flex items-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#00A884]" />
                     {c.status}
                   </span>
-                  <span className="text-[10px] font-mono text-slate-400">{c.syncFrequency}</span>
+                  <span className="text-[10px] font-mono text-[#787774]">{c.syncFrequency}</span>
                 </div>
               </div>
 
               {/* Description */}
-              <p className="text-xs text-slate-600 leading-relaxed font-medium">
+              <p className="text-xs text-[#37352F] leading-relaxed font-medium">
                 {c.description}
               </p>
 
               {/* Key Metrics */}
-              <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5">
+              <div className="p-4 rounded-xl bg-[#F7F6F3] border border-[#E9E8E4] space-y-2.5">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-slate-500 flex items-center gap-1.5">
-                    <Layers className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="text-[#787774] flex items-center gap-1.5">
+                    <Layers className="w-3.5 h-3.5 text-[#2383E2]" />
                     <span>Ingested Chunks:</span>
                   </span>
-                  <span className="text-slate-900 font-extrabold text-sm">
+                  <span className="text-[#000000] font-bold text-sm">
                     {c.chunks.toLocaleString()} chunks
                   </span>
                 </div>
 
                 {/* Security Classification Tag */}
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-slate-500 font-mono flex items-center gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="text-[#787774] font-mono flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#2383E2]" />
                     <span>Security Tag:</span>
                   </span>
-                  <span className={`px-2.5 py-0.5 rounded text-xs font-mono font-bold flex items-center gap-1.5 ${getBadgeStyle(c.classificationType)}`}>
+                  <span className={`px-2.5 py-0.5 rounded-md text-xs font-mono font-bold flex items-center gap-1.5 ${getBadgeStyle(c.classificationType)}`}>
                     {getClassificationIcon(c.classificationType)}
                     <span>{c.classification}</span>
                   </span>
@@ -369,13 +370,13 @@ export const ConnectorsView: React.FC = () => {
 
               {/* ACL Group Entitlements Pill Mapping */}
               <div className="space-y-1.5 text-xs">
-                <div className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
-                  <Lock className="w-3 h-3 text-amber-600" />
+                <div className="text-[11px] font-mono text-[#787774] flex items-center gap-1">
+                  <Lock className="w-3 h-3 text-[#D97706]" />
                   <span>Mapped ACL Entitlement Groups:</span>
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {c.aclGroups.map((grp, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded text-[11px] font-mono bg-slate-100 text-slate-700 border border-slate-200 font-medium">
+                    <span key={i} className="px-2 py-0.5 rounded-md text-[11px] font-mono bg-[#F1F0EC] text-[#37352F] border border-[#D9D8D5] font-medium">
                       {grp}
                     </span>
                   ))}
@@ -383,21 +384,21 @@ export const ConnectorsView: React.FC = () => {
               </div>
 
               {/* Card Footer Actions: Actionable Re-Ingest Micro Button */}
-              <div className="pt-3 border-t border-slate-200 flex items-center justify-between text-xs">
-                <span className="text-[11px] font-mono text-slate-500 flex items-center gap-1">
+              <div className="pt-3 border-t border-[#E9E8E4] flex items-center justify-between text-xs">
+                <span className="text-[11px] font-mono text-[#787774] flex items-center gap-1">
                   <span>Last synced:</span>
-                  <strong className="text-slate-800 font-semibold">{c.lastSync}</strong>
+                  <strong className="text-[#37352F] font-semibold">{c.lastSync}</strong>
                 </span>
 
                 <button
                   onClick={() => handleSyncConnector(c.id, c.name)}
                   disabled={isCurrentlySyncing}
-                  className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-mono text-xs rounded border border-slate-300 flex items-center gap-1.5 transition-colors disabled:opacity-50 font-bold active:scale-95 shadow-2xs"
+                  className="px-3 py-1 bg-[#F1F0EC] hover:bg-[#E3E2E0] text-[#37352F] font-mono text-xs rounded-lg border border-[#D9D8D5] flex items-center gap-1.5 transition-colors disabled:opacity-50 font-bold active:scale-95 shadow-2xs"
                 >
                   {isCurrentlySyncing ? (
-                    <RotateCw className="w-3.5 h-3.5 text-indigo-600 animate-spin" />
+                    <RotateCw className="w-3.5 h-3.5 text-[#2383E2] animate-spin" />
                   ) : (
-                    <RefreshCw className="w-3.5 h-3.5 text-indigo-600" />
+                    <RefreshCw className="w-3.5 h-3.5 text-[#2383E2]" />
                   )}
                   <span>{isCurrentlySyncing ? 'Syncing...' : 'Re-Ingest'}</span>
                 </button>
