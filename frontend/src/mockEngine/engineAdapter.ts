@@ -200,6 +200,7 @@ export class EngineAdapter {
     const isGreeting = ['hi', 'hello', 'hi there', 'hey', 'hey there', 'who are you', 'good morning', 'good afternoon'].some(g => queryLower === g || queryLower.startsWith(g + ' '));
     const isCapabilityQuery = queryLower.includes('capabilities') || queryLower.includes('what can you do') || queryLower.includes('what do you do') || queryLower.includes('help me') || queryLower.includes('how to use');
     const isDesignQuery = queryLower.includes('dashboard') || queryLower.includes('cluttered') || queryLower.includes('simplify') || queryLower.includes('recommend');
+    const isDefinitionQuery = queryLower.startsWith('what is') || queryLower.startsWith('what are') || queryLower.startsWith('define') || queryLower.startsWith('explain');
 
     if (isGreeting || isCapabilityQuery) {
       const latencyMs = Number((performance.now() - start + 15).toFixed(1));
@@ -270,16 +271,19 @@ export class EngineAdapter {
       };
     }
 
-    // 2. Score Candidates with Stop-Word Filtering & Strict Relevance Thresholding
+    // 2. Score Candidates with Word-Boundary Token Matching & Strict Relevance Thresholding
     const tokens = queryLower
       .replace(/[^\w\s]/g, ' ')
       .split(/\s+/)
-      .filter(t => t.length > 2 && !STOP_WORDS.has(t));
+      .filter(t => t.length >= 2 && !STOP_WORDS.has(t));
 
     const candidateScores = this.docs.map(doc => {
       let matches = 0;
       for (const t of tokens) {
-        if (doc.content.toLowerCase().includes(t) || doc.title.toLowerCase().includes(t)) {
+        // Enforce exact word boundary matching (\btoken\b) to prevent partial substring matches (e.g. 'nli' matching 'unlimited')
+        const escapedToken = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const wordRegex = new RegExp(`\\b${escapedToken}\\b`, 'i');
+        if (wordRegex.test(doc.content) || wordRegex.test(doc.title)) {
           matches++;
         }
       }
@@ -303,15 +307,15 @@ export class EngineAdapter {
       }
 
       const sparseScore = matches / tokens.length;
-      // Require at least 2 matching terms OR sparseScore >= 0.40 to avoid single weak-word false positives
-      const isValidMatch = matches >= 2 || sparseScore >= 0.40;
-      const denseScore = isValidMatch ? Math.min(1.0, 0.50 + sparseScore * 0.45) : sparseScore * 0.30;
-      const rrfScore = isValidMatch ? 0.85 : 0.15;
+      // Require at least 2 matching terms OR sparseScore >= 0.50 to avoid single weak-word false positives
+      const isValidMatch = matches >= 2 || sparseScore >= 0.50;
+      const denseScore = isValidMatch ? Math.min(1.0, 0.50 + sparseScore * 0.45) : sparseScore * 0.20;
+      const rrfScore = isValidMatch ? 0.85 : 0.10;
       const ageDays = (Date.now() - new Date(doc.updated).getTime()) / (1000 * 60 * 60 * 24);
       const temporalDecay = Math.exp(-0.005 * ageDays);
       const finalScore = isValidMatch
         ? Number(Math.min(0.98, (sparseScore * 0.4 + denseScore * 0.6) * temporalDecay).toFixed(3))
-        : Number((sparseScore * 0.20).toFixed(3));
+        : Number((sparseScore * 0.10).toFixed(3));
 
       return {
         chunkId: doc.id,
@@ -330,20 +334,32 @@ export class EngineAdapter {
       };
     }).sort((a, b) => b.finalScore - a.finalScore);
 
-    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
+    const bestMatches = candidateScores.filter(c => c.aclPassed && c.finalScore >= 0.48).slice(0, 3);
 
     let answerText = '';
     let confidenceScore = 0.85;
+    let isAbstained = false;
 
     if (bestMatches.length > 0) {
       answerText = `Based on verified enterprise documentation (Access Level ${level}):\n\n${bestMatches.map(m => m.content).join('\n\n')}`;
       confidenceScore = Number(Math.min(0.98, 0.72 + (bestMatches[0].finalScore * 0.25)).toFixed(2));
+      isAbstained = false;
     } else if (isDesignQuery) {
       answerText = `To simplify the dashboard layout for users, we recommend the following UX optimizations:\n\n1. **Categorized Bento Layout**: Group metrics into clean, single-purpose cards with clear visual hierarchy.\n2. **Collapsible Technical Panes**: Keep raw audit traces and claims details collapsed by default.\n3. **Quick Action Chips**: Replace verbose text prompts with one-click quick action chips.\n4. **Progressive Disclosure**: Show high-level status badges (NLI Grounded, Latency) upfront, allowing users to expand full details on demand.`;
       confidenceScore = 0.88;
+      isAbstained = false;
+    } else if (isDefinitionQuery) {
+      if (queryLower.includes('nlp') || queryLower.includes('nli')) {
+        answerText = `**NLP (Natural Language Processing)** is a branch of artificial intelligence focused on helping computers understand, interpret, and generate human language.\n\n**NLI (Natural Language Inference)** is a fundamental task in NLP that evaluates whether a hypothesis statement logically follows from (entails), contradicts, or is neutral toward a given premise text.\n\n*(Note: This is a general technical definition. No specific internal enterprise document was found matching this topic in Confluence or Google Drive.)*`;
+      } else {
+        answerText = `Here is a general technical overview for "${queryTrimmed}":\n\nThis term refers to standard software concepts. No specific internal enterprise document was found matching this topic in your connected knowledge bases.\n\n*(Note: Provided as general AI knowledge. Internal enterprise docs take priority when available.)*`;
+      }
+      confidenceScore = 0.82;
+      isAbstained = false;
     } else {
-      answerText = `I searched our indexed enterprise knowledge bases (Confluence, Google Drive, Zendesk), but no relevant documentation was found matching "${queryTrimmed}".\n\nTry asking about:\n• API Gateway architecture and rate limits\n• Production blue-green deployment runbook\n• Engineering onboarding guide\n• Password reset & MFA setup\n• Subscription plans and billing details`;
-      confidenceScore = 0.35;
+      answerText = `I searched our indexed enterprise knowledge bases (Confluence, Google Drive, Zendesk), but no verified enterprise documentation was found matching "${queryTrimmed}".\n\nTry asking about:\n• API Gateway architecture and rate limits\n• Production blue-green deployment runbook\n• Engineering onboarding guide\n• Password reset & MFA setup\n• Subscription plans and billing details`;
+      confidenceScore = 0.30;
+      isAbstained = true;
     }
 
     const claims = bestMatches.map(m => ({
@@ -353,6 +369,7 @@ export class EngineAdapter {
       isVerified: true,
     }));
 
+    // Citations MUST strictly contain only verified document matches (empty [] when answering general definition queries)
     const citations = bestMatches.map((m, idx) => ({
       citationIndex: idx + 1,
       chunkId: m.chunkId,
@@ -372,7 +389,7 @@ export class EngineAdapter {
       user: persona,
       answerText,
       confidenceScore,
-      isAbstained: bestMatches.length === 0 && !isGreeting && !isCapabilityQuery && !isDesignQuery,
+      isAbstained,
       citations,
       claims,
       candidates: candidateScores,
@@ -386,24 +403,27 @@ export class EngineAdapter {
 
     // Call local Llama.cpp CUDA Server (port 8085) or Backend API (port 8080) for real LLM synthesis
     try {
-      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.45).slice(0, 3);
-      const topContext = bestMatches.length > 0
-        ? bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n')
-        : 'No specific internal enterprise document found for this specific query.';
+      const bestMatches = syncResult.candidates.filter(c => c.aclPassed && c.finalScore >= 0.48).slice(0, 3);
+      
+      let systemPrompt = '';
+      let userPrompt = '';
+
+      if (bestMatches.length > 0) {
+        const topContext = bestMatches.map(m => `[Doc: ${m.documentTitle}]: ${m.content}`).join('\n\n');
+        systemPrompt = `You are EKRS Enterprise Knowledge Assistant running under user clearance Level ${persona.clearanceLevel || 2} (${persona.role}). Answer the user query strictly using the provided document context below. Cite sources using [Doc X].`;
+        userPrompt = `Context:\n${topContext}\n\nQuestion: ${queryText.trim()}`;
+      } else {
+        systemPrompt = `You are EKRS Enterprise Knowledge Assistant. If the user asks a general question or definition (e.g. "what is nlp and nli"), provide a helpful, concise definition without inventing fake internal enterprise documents or citations. State clearly at the end that no internal enterprise doc was found.`;
+        userPrompt = `Question: ${queryText.trim()}`;
+      }
 
       const response = await fetch('http://127.0.0.1:8085/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [
-            {
-              role: 'system',
-              content: `You are EKRS Enterprise Knowledge Assistant running under user clearance Level ${persona.clearanceLevel || 2} (${persona.role}). If relevant document context is provided below, answer using it. If no relevant document context exists for the user's question, answer helpful general guidance politely.`
-            },
-            {
-              role: 'user',
-              content: `Context:\n${topContext}\n\nQuestion: ${queryText.trim()}`
-            }
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
           ],
           max_tokens: 350,
           temperature: 0.3
